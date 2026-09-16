@@ -21,14 +21,14 @@ jobs:
           echo "ZIP extracted successfully"
           ls -la project
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
+        - name: Set up Java
+          uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
           
-       - name: Set up Android SDK
-        run: |
+         - name: Set up Android SDK
+         run: |
           export ANDROID_HOME=$ANDROID_SDK_ROOT
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
