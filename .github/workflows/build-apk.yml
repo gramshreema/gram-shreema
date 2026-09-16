@@ -21,7 +21,7 @@ jobs:
           echo "ZIP extracted successfully"
           ls -la project
 
-    - name: Set up Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
