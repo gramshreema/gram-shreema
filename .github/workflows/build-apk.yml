@@ -21,11 +21,14 @@ jobs:
           echo "ZIP extracted successfully"
           ls -la project
 
-      - name: Set up Java
+    - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Install Android SDK
         run: |
