@@ -20,7 +20,13 @@ jobs:
           unzip -o ShreemaGram_GitHub_APK_Build_Project.zip -d project
           echo "ZIP extracted successfully"
           ls -la project
-
+      - name: Fix FirebaseException import
+        run: |
+          FILE="project/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
+          if ! grep -q "import com.google.firebase.FirebaseException;" "$FILE"; then
+            sed -i '/^import /i import com.google.firebase.FirebaseException;' "$FILE"
+          fi
+          grep -n "FirebaseException" "$FILE"
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
