@@ -19,25 +19,26 @@ jobs:
           ls -la
           unzip -o ShreemaGram_GitHub_APK_Build_Project.zip -d project
           echo "ZIP extracted successfully"
-          ls -la project।
-          - name: Set up Java
-          uses: actions/setup-java@v4
+          ls -la project
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'  
-- name: Set up Android SDK
-         run: |
+          java-version: '17'
+
+      - name: Set up Android SDK
+        run: |
           export ANDROID_HOME=$ANDROID_SDK_ROOT
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+
       - name: Install Android SDK
         run: |
           yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"     
-
-    
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
