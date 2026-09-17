@@ -1,8 +1,5 @@
-package com.shreema.gramshikayat;
+name: Build Shreema APK
 
-import com.google.firebase.FirebaseException;
-
-import android.os.Bundle;
 on:
   workflow_dispatch:
   push:
