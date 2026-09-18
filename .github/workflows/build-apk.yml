@@ -18,48 +18,37 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
       - name: Check project files
         run: |
           echo "===== PROJECT FILES ====="
-          ls -la
+          find . -maxdepth 3 -type f | sort
           echo "========================"
-
-      - name: Make Gradle executable
-        run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-          fi
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
+          cache-disabled: true
 
       - name: Build Debug APK
         run: |
           if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
             ./gradlew assembleDebug --stacktrace --no-daemon
           else
             gradle assembleDebug --stacktrace --no-daemon
           fi
 
-      - name: Check generated APK
+      - name: Check APK
         run: |
-          echo "===== APK FILE ====="
-          ls -lh app/build/outputs/apk/debug/
-          echo "===================="
-
           APK="app/build/outputs/apk/debug/app-debug.apk"
 
           if [ ! -f "$APK" ]; then
@@ -67,22 +56,18 @@ jobs:
             exit 1
           fi
 
-          echo "APK successfully generated:"
+          echo "APK SUCCESSFULLY GENERATED"
           ls -lh "$APK"
 
-      - name: Verify APK signature
+      - name: Verify APK
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
-
           $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose "$APK"
 
       - name: Show APK information
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
-
-          echo "===== APK INFORMATION ====="
           $ANDROID_HOME/build-tools/35.0.0/aapt dump badging "$APK" | head -20
-          echo "==========================="
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
