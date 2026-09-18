@@ -10,10 +10,8 @@ jobs:
   build:
     name: Build Gram Shreema APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-
       - name: Checkout source code
         uses: actions/checkout@v4
 
@@ -35,14 +33,14 @@ jobs:
       - name: Find project ZIP
         run: |
           echo "===== ZIP FILES ====="
-          find . -maxdepth 2 -type f -name "*.zip" -print
+          find . -type f -name "*.zip" -print
           echo "===================="
 
       - name: Extract Android project
         run: |
           mkdir -p project
 
-          ZIP_FILE=$(find . -maxdepth 2 -type f -name "*.zip" | head -1)
+          ZIP_FILE=$(find . -type f -name "*.zip" | head -1)
 
           if [ -z "$ZIP_FILE" ]; then
             echo "ERROR: Project ZIP not found."
@@ -54,7 +52,7 @@ jobs:
           unzip -o "$ZIP_FILE" -d project
 
           echo "===== EXTRACTED FILES ====="
-          find project -maxdepth 5 -type f | sort | head -200
+          find project -maxdepth 6 -type f | sort | head -300
           echo "==========================="
 
       - name: Find Gradle project
@@ -65,12 +63,15 @@ jobs:
           \) | head -1)
 
           if [ -z "$SETTINGS_FILE" ]; then
-            echo "ERROR: settings.gradle not found inside ZIP."
-            echo "Checking for build.gradle files:"
+            echo "ERROR: settings.gradle not found."
+
+            echo "===== BUILD GRADLE FILES ====="
             find project -type f \( \
               -name "build.gradle" \
               -o -name "build.gradle.kts" \
             \) -print
+            echo "=============================="
+
             exit 1
           fi
 
@@ -81,14 +82,30 @@ jobs:
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
+      - name: Check important project files
+        run: |
+          echo "===== PROJECT DIRECTORY ====="
+          cd "$PROJECT_DIR"
+          pwd
+          ls -la
+          echo "============================="
+
+          echo "===== GRADLE FILES ====="
+          find . -maxdepth 3 -type f \( \
+            -name "settings.gradle" \
+            -o -name "build.gradle" \
+            -o -name "gradle.properties" \
+          \) -print
+          echo "========================"
+
       - name: Build Debug APK
         run: |
           cd "$PROJECT_DIR"
 
-          echo "===== BUILD DIRECTORY ====="
+          echo "===== BUILD START ====="
           pwd
           ls -la
-          echo "==========================="
+          echo "======================"
 
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
@@ -99,7 +116,7 @@ jobs:
 
       - name: Find generated APK
         run: |
-          echo "===== APK FILES ====="
+          echo "===== SEARCHING FOR APK ====="
 
           APK_FILE=$(find "$PROJECT_DIR" -type f \
             -path "*/build/outputs/apk/debug/*.apk" | head -1)
@@ -116,11 +133,17 @@ jobs:
 
       - name: Verify APK
         run: |
-          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose "$APK_FILE"
+          echo "===== VERIFY APK ====="
+
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            verify --verbose "$APK_FILE"
 
       - name: Show APK information
         run: |
-          $ANDROID_HOME/build-tools/35.0.0/aapt dump badging "$APK_FILE" | head -25
+          echo "===== APK INFORMATION ====="
+
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" \
+            dump badging "$APK_FILE" | head -25
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
