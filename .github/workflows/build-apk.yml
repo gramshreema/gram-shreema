@@ -8,44 +8,38 @@ on:
 
 jobs:
   build:
+    name: Build Gram Shreema APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout
+
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Extract project ZIP
-        run: |
-          ls -la
-          unzip -o ShreemaGram_GitHub_APK_Build_Project.zip -d project
-          echo "ZIP extracted successfully"
-          ls -la project
-      
-      - name: Fix FirebaseException import
-        run: |
-          FILE="project/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
-          if ! grep -q "import com.google.firebase.FirebaseException;" "$FILE"; then
-            sed -i '/^import /i import com.google.firebase.FirebaseException;' "$FILE"
-          fi
-          grep -n "FirebaseException" "$FILE"
-      - name: Set up Java
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Set up Android SDK
-        run: |
-          export ANDROID_HOME=$ANDROID_SDK_ROOT
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
-      - name: Install Android SDK
+      - name: Check project files
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          echo "===== PROJECT FILES ====="
+          ls -la
+          echo "========================"
+
+      - name: Make Gradle executable
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+          fi
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -53,11 +47,46 @@ jobs:
           gradle-version: '8.7'
 
       - name: Build Debug APK
-        working-directory: project
-        run: gradle assembleDebug --stacktrace
+        run: |
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug --stacktrace --no-daemon
+          else
+            gradle assembleDebug --stacktrace --no-daemon
+          fi
+
+      - name: Check generated APK
+        run: |
+          echo "===== APK FILE ====="
+          ls -lh app/build/outputs/apk/debug/
+          echo "===================="
+
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ ! -f "$APK" ]; then
+            echo "ERROR: app-debug.apk was not generated."
+            exit 1
+          fi
+
+          echo "APK successfully generated:"
+          ls -lh "$APK"
+
+      - name: Verify APK signature
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose "$APK"
+
+      - name: Show APK information
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          echo "===== APK INFORMATION ====="
+          $ANDROID_HOME/build-tools/35.0.0/aapt dump badging "$APK" | head -20
+          echo "==========================="
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: gram-shreema-debug-apk
-          path: project/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
