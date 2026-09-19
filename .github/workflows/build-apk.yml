@@ -97,7 +97,12 @@ jobs:
             -o -name "gradle.properties" \
           \) -print
           echo "========================"
-
+      - name: Show app build.gradle
+        run: |
+          cd "$PROJECT_DIR"
+          echo "===== app/build.gradle ====="
+          cat app/build.gradle
+          echo "============================"
       - name: Build Debug APK
         run: |
           cd "$PROJECT_DIR"
