@@ -48,7 +48,6 @@ jobs:
           fi
 
           echo "Using ZIP: $ZIP_FILE"
-
           unzip -o "$ZIP_FILE" -d project
 
           echo "===== EXTRACTED FILES ====="
@@ -64,20 +63,12 @@ jobs:
 
           if [ -z "$SETTINGS_FILE" ]; then
             echo "ERROR: settings.gradle not found."
-
-            echo "===== BUILD GRADLE FILES ====="
-            find project -type f \( \
-              -name "build.gradle" \
-              -o -name "build.gradle.kts" \
-            \) -print
-            echo "=============================="
-
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
 
-          echo "Grdle project found:"
+          echo "Gradle project found:"
           echo "$PROJECT_DIR"
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
@@ -97,6 +88,7 @@ jobs:
             -o -name "gradle.properties" \
           \) -print
           echo "========================"
+
       - name: Show app build.gradle
         run: |
           cd "$PROJECT_DIR"
@@ -106,17 +98,20 @@ jobs:
 
       - name: Fix FirebaseException import
         run: |
-          sed -i '/import com.google.firebase.FirebaseException;/d' "$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
-          sed -i '/import android.os.Bundle;/a import com.google.firebase.FirebaseException;' "$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
+          FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
 
-      - name: Build Debug APK
-        run: |
-          cd "$PROJECT_DIR"
-        run: |
-          cd "$PROJECT_DIR"
-          echo "===== app/build.gradle ====="
-          cat app/build.gradle
-          echo "============================"
+          if [ ! -f "$FILE" ]; then
+            echo "ERROR: MainActivity.java not found."
+            exit 1
+          fi
+
+          sed -i '/import com.google.firebase.FirebaseException;/d' "$FILE"
+          sed -i '/import android.os.Bundle;/a import com.google.firebase.FirebaseException;' "$FILE"
+
+          echo "===== FIREBASE IMPORT CHECK ====="
+          grep -n "FirebaseException" "$FILE"
+          echo "================================="
+
       - name: Build Debug APK
         run: |
           cd "$PROJECT_DIR"
