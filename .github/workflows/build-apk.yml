@@ -95,7 +95,6 @@ jobs:
           echo "===== app/build.gradle ====="
           cat app/build.gradle
           echo "============================"
-
       - name: Fix FirebaseException import
         run: |
           FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
@@ -105,12 +104,35 @@ jobs:
             exit 1
           fi
 
-          sed -i '/import com.google.firebase.FirebaseException;/d' "$FILE"
-          sed -i '/import android.os.Bundle;/a import com.google.firebase.FirebaseException;' "$FILE"
+          python3 - <<'PY'
+          import os
 
-          echo "===== FIREBASE IMPORT CHECK ====="
+          file = os.environ["PROJECT_DIR"] + "/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
+
+          with open(file, "r", encoding="utf-8") as f:
+              text = f.read()
+
+          text = text.replace(
+              "import com.google.firebase.FirebaseException;\n",
+              ""
+          )
+
+          marker = "package com.shreema.gramshikayat;\n"
+          text = text.replace(
+              marker,
+              marker + "\nimport com.google.firebase.FirebaseException;\n",
+              1
+          )
+
+          with open(file, "w", encoding="utf-8") as f:
+              f.write(text)
+
+          print("FirebaseException import added successfully.")
+          PY
+
+          echo "===== IMPORT CHECK ====="
           grep -n "FirebaseException" "$FILE"
-          echo "================================="
+          echo "========================"
 
       - name: Build Debug APK
         run: |
