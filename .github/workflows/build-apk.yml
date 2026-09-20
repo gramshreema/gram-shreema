@@ -133,7 +133,16 @@ jobs:
           echo "===== IMPORT CHECK ====="
           grep -n "FirebaseException" "$FILE"
           echo "========================"
+      - name: Set new app version
+        run: |
+          GRADLE_FILE="$PROJECT_DIR/app/build.gradle"
 
+          sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
+          sed -i 's/versionName[[:space:]]*["'\''][^"'\'']*["'\'']/versionName "3.0"/' "$GRADLE_FILE"
+
+          echo "===== APP VERSION ====="
+          grep -n "versionCode\|versionName" "$GRADLE_FILE"
+          echo "======================="
       - name: Build Debug APK
         run: |
           cd "$PROJECT_DIR"
