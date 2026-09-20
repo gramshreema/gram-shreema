@@ -40,7 +40,7 @@ jobs:
         run: |
           mkdir -p project
 
-          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project_New.zip" | head -1)
+          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project.zip" | head -1)
 
           if [ -z "$ZIP_FILE" ]; then
             echo "ERROR: Project ZIP not found."
