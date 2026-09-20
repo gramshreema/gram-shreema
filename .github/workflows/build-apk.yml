@@ -179,7 +179,7 @@ jobs:
           echo "===== APK INFORMATION ====="
 
           "$ANDROID_HOME/build-tools/35.0.0/aapt" \
-            dump badging "$APK_FILE" | head -25
+            dump badging "$APK_FILE"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
