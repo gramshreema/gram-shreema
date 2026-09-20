@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout source code
         uses: actions/checkout@v4
 
@@ -40,18 +41,25 @@ jobs:
         run: |
           mkdir -p project
 
-          ZIP_FILE=$(find . -type f -name "*.zip" | head -1)
+          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project_New.zip" | head -1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "New ZIP not found. Searching for any project ZIP..."
+            ZIP_FILE=$(find . -type f -name "*.zip" | head -1)
+          fi
 
           if [ -z "$ZIP_FILE" ]; then
             echo "ERROR: Project ZIP not found."
             exit 1
           fi
 
-          echo "Using ZIP: $ZIP_FILE"
+          echo "Using ZIP:"
+          echo "$ZIP_FILE"
+
           unzip -o "$ZIP_FILE" -d project
 
           echo "===== EXTRACTED FILES ====="
-          find project -maxdepth 6 -type f | sort | head -300
+          find project -maxdepth 8 -type f | sort | head -500
           echo "==========================="
 
       - name: Find Gradle project
@@ -84,18 +92,14 @@ jobs:
           echo "===== GRADLE FILES ====="
           find . -maxdepth 3 -type f \( \
             -name "settings.gradle" \
+            -o -name "settings.gradle.kts" \
             -o -name "build.gradle" \
+            -o -name "build.gradle.kts" \
             -o -name "gradle.properties" \
           \) -print
           echo "========================"
 
-      - name: Show app build.gradle
-        run: |
-          cd "$PROJECT_DIR"
-          echo "===== app/build.gradle ====="
-          cat app/build.gradle
-          echo "============================"
-      - name: Fix FirebaseException import
+      - name: Check MainActivity.java
         run: |
           FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
 
@@ -104,45 +108,31 @@ jobs:
             exit 1
           fi
 
-          python3 - <<'PY'
-          import os
+          echo "===== MainActivity.java ====="
+          ls -lh "$FILE"
+          file "$FILE"
+          echo "============================="
 
-          file = os.environ["PROJECT_DIR"] + "/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
+      - name: Show app build.gradle
+        run: |
+          cd "$PROJECT_DIR"
 
-          with open(file, "r", encoding="utf-8") as f:
-              text = f.read()
+          echo "===== app/build.gradle ====="
+          cat app/build.gradle
+          echo "============================"
 
-          text = text.replace(
-              "import com.google.firebase.FirebaseException;\n",
-              ""
-          )
-
-          marker = "package com.shreema.gramshikayat;\n"
-          text = text.replace(
-              marker,
-              marker + "\nimport com.google.firebase.FirebaseException;\n",
-              1
-          )
-
-          with open(file, "w", encoding="utf-8") as f:
-              f.write(text)
-
-          print("FirebaseException import added successfully.")
-          PY
-
-          echo "===== IMPORT CHECK ====="
-          grep -n "FirebaseException" "$FILE"
-          echo "========================"
       - name: Set new app version
         run: |
           GRADLE_FILE="$PROJECT_DIR/app/build.gradle"
 
           sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
+
           sed -i 's/versionName[[:space:]]*["'\''][^"'\'']*["'\'']/versionName "3.0"/' "$GRADLE_FILE"
 
           echo "===== APP VERSION ====="
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
           echo "======================="
+
       - name: Build Debug APK
         run: |
           cd "$PROJECT_DIR"
@@ -180,15 +170,29 @@ jobs:
         run: |
           echo "===== VERIFY APK ====="
 
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
-            verify --verbose "$APK_FILE"
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" \
+            -name apksigner | sort -V | tail -1)
+
+          if [ -z "$APKSIGNER" ]; then
+            echo "ERROR: apksigner not found."
+            exit 1
+          fi
+
+          "$APKSIGNER" verify --verbose "$APK_FILE"
 
       - name: Show APK information
         run: |
           echo "===== APK INFORMATION ====="
 
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" \
-            dump badging "$APK_FILE"
+          AAPT=$(find "$ANDROID_HOME/build-tools" \
+            -name aapt | sort -V | tail -1)
+
+          if [ -z "$AAPT" ]; then
+            echo "ERROR: aapt not found."
+            exit 1
+          fi
+
+          "$AAPT" dump badging "$APK_FILE"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
