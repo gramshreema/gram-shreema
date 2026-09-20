@@ -77,7 +77,7 @@ jobs:
 
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
 
-          echo "Gradle project found:"
+          echo "Grdle project found:"
           echo "$PROJECT_DIR"
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
@@ -98,6 +98,20 @@ jobs:
           \) -print
           echo "========================"
       - name: Show app build.gradle
+        run: |
+          cd "$PROJECT_DIR"
+          echo "===== app/build.gradle ====="
+          cat app/build.gradle
+          echo "============================"
+
+      - name: Fix FirebaseException import
+        run: |
+          sed -i '/import com.google.firebase.FirebaseException;/d' "$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
+          sed -i '/import android.os.Bundle;/a import com.google.firebase.FirebaseException;' "$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
+
+      - name: Build Debug APK
+        run: |
+          cd "$PROJECT_DIR"
         run: |
           cd "$PROJECT_DIR"
           echo "===== app/build.gradle ====="
