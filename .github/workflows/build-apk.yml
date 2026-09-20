@@ -31,40 +31,9 @@ jobs:
           gradle-version: '8.7'
           cache-disabled: true
 
-      - name: Find project ZIP
-        run: |
-          echo "===== ZIP FILES ====="
-          find . -type f -name "*.zip" -print
-          echo "===================="
-
-      - name: Extract Android project
-        run: |
-          mkdir -p project
-
-          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project_New.zip" | head -1)
-
-          if [ -z "$ZIP_FILE" ]; then
-            echo "New ZIP not found. Searching for any project ZIP..."
-            ZIP_FILE=$(find . -type f -name "*.zip" | head -1)
-          fi
-
-          if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: Project ZIP not found."
-            exit 1
-          fi
-
-          echo "Using ZIP:"
-          echo "$ZIP_FILE"
-
-          unzip -o "$ZIP_FILE" -d project
-
-          echo "===== EXTRACTED FILES ====="
-          find project -maxdepth 8 -type f | sort | head -500
-          echo "==========================="
-
       - name: Find Gradle project
         run: |
-          SETTINGS_FILE=$(find project -type f \( \
+          SETTINGS_FILE=$(find . -type f \( \
             -name "settings.gradle" \
             -o -name "settings.gradle.kts" \
           \) | head -1)
@@ -76,30 +45,12 @@ jobs:
 
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
 
-          echo "Gradle project found:"
-          echo "$PROJECT_DIR"
-
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-      - name: Check important project files
-        run: |
-          echo "===== PROJECT DIRECTORY ====="
-          cd "$PROJECT_DIR"
-          pwd
-          ls -la
-          echo "============================="
+          echo "Gradle project:"
+          echo "$PROJECT_DIR"
 
-          echo "===== GRADLE FILES ====="
-          find . -maxdepth 3 -type f \( \
-            -name "settings.gradle" \
-            -o -name "settings.gradle.kts" \
-            -o -name "build.gradle" \
-            -o -name "build.gradle.kts" \
-            -o -name "gradle.properties" \
-          \) -print
-          echo "========================"
-
-      - name: Check MainActivity.java
+      - name: Check MainActivity
         run: |
           FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
 
@@ -108,39 +59,21 @@ jobs:
             exit 1
           fi
 
-          echo "===== MainActivity.java ====="
+          echo "MainActivity.java found:"
           ls -lh "$FILE"
-          file "$FILE"
-          echo "============================="
 
-      - name: Show app build.gradle
-        run: |
-          cd "$PROJECT_DIR"
-
-          echo "===== app/build.gradle ====="
-          cat app/build.gradle
-          echo "============================"
-
-      - name: Set new app version
+      - name: Set app version
         run: |
           GRADLE_FILE="$PROJECT_DIR/app/build.gradle"
 
-          sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
+          sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 4/' "$GRADLE_FILE"
+          sed -i 's/versionName[[:space:]]*["'\''][^"'\'']*["'\'']/versionName "4.0"/' "$GRADLE_FILE"
 
-          sed -i 's/versionName[[:space:]]*["'\''][^"'\'']*["'\'']/versionName "3.0"/' "$GRADLE_FILE"
-
-          echo "===== APP VERSION ====="
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
-          echo "======================="
 
       - name: Build Debug APK
         run: |
           cd "$PROJECT_DIR"
-
-          echo "===== BUILD START ====="
-          pwd
-          ls -la
-          echo "======================"
 
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
@@ -149,10 +82,8 @@ jobs:
             gradle assembleDebug --stacktrace --no-daemon
           fi
 
-      - name: Find generated APK
+      - name: Find APK
         run: |
-          echo "===== SEARCHING FOR APK ====="
-
           APK_FILE=$(find "$PROJECT_DIR" -type f \
             -path "*/build/outputs/apk/debug/*.apk" | head -1)
 
@@ -165,34 +96,6 @@ jobs:
           ls -lh "$APK_FILE"
 
           echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
-
-      - name: Verify APK
-        run: |
-          echo "===== VERIFY APK ====="
-
-          APKSIGNER=$(find "$ANDROID_HOME/build-tools" \
-            -name apksigner | sort -V | tail -1)
-
-          if [ -z "$APKSIGNER" ]; then
-            echo "ERROR: apksigner not found."
-            exit 1
-          fi
-
-          "$APKSIGNER" verify --verbose "$APK_FILE"
-
-      - name: Show APK information
-        run: |
-          echo "===== APK INFORMATION ====="
-
-          AAPT=$(find "$ANDROID_HOME/build-tools" \
-            -name aapt | sort -V | tail -1)
-
-          if [ -z "$AAPT" ]; then
-            echo "ERROR: aapt not found."
-            exit 1
-          fi
-
-          "$AAPT" dump badging "$APK_FILE"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
