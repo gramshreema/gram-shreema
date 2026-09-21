@@ -174,11 +174,6 @@ EOF
           cd "$PROJECT_DIR"
 
           gradle clean assembleDebug --no-daemon --stacktrace
-      - name: Build APK
-        run: |
-          cd "$PROJECT_DIR"
-
-          gradle clean assembleDebug --no-daemon --stacktrace
 
       - name: Find APK
         run: |
