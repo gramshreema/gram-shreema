@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout source code
         uses: actions/checkout@v4
 
@@ -25,6 +24,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
 
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -33,30 +37,24 @@ jobs:
 
       - name: Find project ZIP
         run: |
-          echo "===== ZIP FILES ====="
-          find . -type f -name "*.zip" -print
-          echo "===================="
+          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project.zip" | head -1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: Project ZIP not found."
+            find . -type f -name "*.zip" -print
+            exit 1
+          fi
+
+          echo "ZIP found: $ZIP_FILE"
+          echo "ZIP_FILE=$ZIP_FILE" >> "$GITHUB_ENV"
 
       - name: Extract Android project
         run: |
           mkdir -p project
-
-          ZIP_FILE=$(find . -type f \
-            -name "ShreemaGram_GitHub_APK_Build_Project.zip" \
-            | head -1)
-
-          if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: Project ZIP not found."
-            exit 1
-          fi
-
-          echo "Using ZIP: $ZIP_FILE"
-
           unzip -o "$ZIP_FILE" -d project
 
-          echo "===== EXTRACTED FILES ====="
+          echo "===== PROJECT FILES ====="
           find project -type f | head -300
-          echo "==========================="
 
       - name: Find Gradle project
         run: |
@@ -66,7 +64,7 @@ jobs:
           \) | head -1)
 
           if [ -z "$SETTINGS_FILE" ]; then
-            echo "ERROR: settings.gradle not found inside ZIP."
+            echo "ERROR: settings.gradle not found."
             find project -type f | head -300
             exit 1
           fi
@@ -75,9 +73,8 @@ jobs:
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-          echo "===== GRADLE PROJECT ====="
+          echo "Gradle project:"
           echo "$PROJECT_DIR"
-          echo "=========================="
 
       - name: Replace MainActivity
         run: |
@@ -87,7 +84,6 @@ jobs:
 
           if [ -z "$FILE" ]; then
             echo "ERROR: MainActivity.java not found."
-            echo "===== JAVA FILES ====="
             find "$PROJECT_DIR" -type f -name "*.java" -print
             exit 1
           fi
@@ -213,13 +209,13 @@ EOF
           FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
 
           if [ ! -f "$FILE" ]; then
-            echo "ERROR: MainActivity.java not found."
+            echo "ERROR: MainActivity.java missing."
             exit 1
           fi
 
-          echo "===== MainActivity CHECK ====="
-          grep -n "FirebaseAuth\|Gmail Login\|signInWithEmailAndPassword" "$FILE"
-          echo "=============================="
+          echo "===== MAIN ACTIVITY CHECK ====="
+          head -20 "$FILE"
+          echo "==============================="
 
       - name: Set app version
         run: |
@@ -231,12 +227,10 @@ EOF
           fi
 
           sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
-
           sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
 
-          echo "===== APP VERSION ====="
+          echo "===== VERSION ====="
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
-          echo "======================="
 
       - name: Build Debug APK
         run: |
@@ -245,7 +239,6 @@ EOF
           echo "===== BUILD START ====="
           pwd
           ls -la
-          echo "======================"
 
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
@@ -266,7 +259,6 @@ EOF
 
           echo "===== APK FOUND ====="
           ls -lh "$APK_FILE"
-          echo "====================="
 
           echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
 
