@@ -96,7 +96,6 @@ jobs:
           fi
 
           sed -i '/^import com.google.firebase.FirebaseException;/d' "$FILE"
-          sed -i '/^package com.shreema.gramshikayat;/a import com.google.firebase.FirebaseException;' "$FILE"
 
       - name: Replace OTP with Email Login
         run: |
