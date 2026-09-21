@@ -87,7 +87,7 @@ jobs:
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
 
-            - name: Build APK
+     - name: Build APK
         run: |
           cd "$PROJECT_DIR"
 
