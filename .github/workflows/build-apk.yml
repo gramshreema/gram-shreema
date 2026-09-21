@@ -182,7 +182,7 @@ JAVA
           ls -lh "$APK_FILE"
           echo "===================="
 
-        - name: Upload APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: gram-shreema-debug-apk
