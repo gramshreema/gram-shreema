@@ -77,7 +77,6 @@ jobs:
             echo "ERROR: app/build.gradle not found"
             exit 1
           fi
-
       - name: Set app version
         run: |
           GRADLE_FILE="$PROJECT_DIR/app/build.gradle"
