@@ -77,7 +77,119 @@ jobs:
 
           echo "Gradle project found:"
           echo "$PROJECT_DIR"
+            - name: Replace MainActivity with Gmail Login
+        run: |
+          FILE=$(find project -type f -path "*/app/src/main/java/com/shreema/gramshikayat/MainActivity.java" | head -1)
 
+          if [ -z "$FILE" ]; then
+            echo "ERROR: MainActivity.java not found inside project ZIP."
+            exit 1
+          fi
+
+          cat > "$FILE" <<'EOF'
+package com.shreema.gramshikayat;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.text.InputType;
+import android.widget.*;
+
+import com.google.firebase.auth.FirebaseAuth;
+
+public class MainActivity extends Activity {
+
+    FirebaseAuth auth;
+
+    EditText email, password;
+    Button loginButton;
+    TextView status;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        auth = FirebaseAuth.getInstance();
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(30, 30, 30, 30);
+
+        TextView title = new TextView(this);
+        title.setText("Gram Shreema");
+        title.setTextSize(28);
+        layout.addView(title);
+
+        TextView subtitle = new TextView(this);
+        subtitle.setText("Gmail Login");
+        subtitle.setTextSize(20);
+        layout.addView(subtitle);
+
+        email = new EditText(this);
+        email.setHint("Gmail / Email");
+        email.setInputType(InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        layout.addView(email);
+
+        password = new EditText(this);
+        password.setHint("Password");
+        password.setInputType(InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        layout.addView(password);
+
+        loginButton = new Button(this);
+        loginButton.setText("Login");
+        layout.addView(loginButton);
+
+        status = new TextView(this);
+        status.setTextSize(16);
+        layout.addView(status);
+
+        setContentView(layout);
+
+        loginButton.setOnClickListener(v -> login());
+    }
+
+    void login() {
+
+        String userEmail = email.getText().toString().trim();
+        String userPassword = password.getText().toString().trim();
+
+        if (userEmail.isEmpty()) {
+            status.setText("Email डालें");
+            return;
+        }
+
+        if (userPassword.isEmpty()) {
+            status.setText("Password डालें");
+            return;
+        }
+
+        loginButton.setEnabled(false);
+        status.setText("Login हो रहा है...");
+
+        auth.signInWithEmailAndPassword(userEmail, userPassword)
+                .addOnCompleteListener(task -> {
+
+                    loginButton.setEnabled(true);
+
+                    if (task.isSuccessful()) {
+                        status.setText("Login successful");
+                    } else {
+                        String message = "Login failed";
+
+                        if (task.getException() != null) {
+                            message = "Login failed: " +
+                                    task.getException().getMessage();
+                        }
+
+                        status.setText(message);
+                    }
+                });
+    }
+}
+EOF
+
+          echo "New Gmail MainActivity installed."
       - name: Check MainActivity
         run: |
           FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
