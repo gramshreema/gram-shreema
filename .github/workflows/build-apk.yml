@@ -71,10 +71,7 @@ jobs:
           ls -la
           echo "==================="
 
-          if [ ! -f "./gradlew" ]; then
-            echo "ERROR: gradlew not found"
-            exit 1
-          fi
+         
 
           if [ ! -f "./app/build.gradle" ]; then
             echo "ERROR: app/build.gradle not found"
