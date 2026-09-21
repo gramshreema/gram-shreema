@@ -87,13 +87,11 @@ jobs:
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
 
-      - name: Build APK
+            - name: Build APK
         run: |
           cd "$PROJECT_DIR"
 
-          chmod +x ./gradlew
-
-          ./gradlew clean assembleDebug --no-daemon --stacktrace
+          gradle clean assembleDebug --no-daemon --stacktrace
 
       - name: Find APK
         run: |
