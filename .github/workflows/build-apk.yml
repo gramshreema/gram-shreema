@@ -87,9 +87,15 @@ jobs:
           sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
+
       - name: Replace OTP with Email Login
         run: |
           FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
+
+          if [ -z "$FILE" ]; then
+            echo "ERROR: MainActivity.java not found"
+            exit 1
+          fi
 
           cat > "$FILE" <<'EOF'
 package com.shreema.gramshikayat;
@@ -121,14 +127,18 @@ public class MainActivity extends Activity {
 
         EditText email = new EditText(this);
         email.setHint("Email ID");
-        email.setInputType(InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        email.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        );
         layout.addView(email);
 
         EditText password = new EditText(this);
         password.setHint("Password");
-        password.setInputType(InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        password.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_PASSWORD
+        );
         layout.addView(password);
 
         Button login = new Button(this);
@@ -168,12 +178,11 @@ public class MainActivity extends Activity {
     }
 }
 EOF
-      
+
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
-          
-              gradle clean assembleDebug --no-daemon --stacktrace
+          gradle clean assembleDebug --no-daemon --stacktrace
 
       - name: Find APK
         run: |
