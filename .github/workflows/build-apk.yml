@@ -88,15 +88,6 @@ jobs:
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
       - name: Fix FirebaseException import
-        run: |
-          FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
-          if [ -z "$FILE" ]; then
-            echo "MainActivity.java not found"
-            exit 1
-          fi
-
-          sed -i '/^import com.google.firebase.FirebaseException;/d' "$FILE"
-
       - name: Replace OTP with Email Login
         run: |
           FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
