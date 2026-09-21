@@ -87,7 +87,7 @@ jobs:
           sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
-      - name: Fix FirebaseException import
+    
       - name: Replace OTP with Email Login
         run: |
           FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
