@@ -182,8 +182,8 @@ JAVA
           ls -lh "$APK_FILE"
           echo "===================="
 
-      - name: Upload APK
+        - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: gram-shreema-debug-apk
-                    path: "${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk"
+          path: "${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk"
