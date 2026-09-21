@@ -168,10 +168,12 @@ public class MainActivity extends Activity {
     }
 }
 EOF
+      
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
-          gradle clean assembleDebug --no-daemon --stacktrace
+          
+              gradle clean assembleDebug --no-daemon --stacktrace
 
       - name: Find APK
         run: |
