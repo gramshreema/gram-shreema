@@ -87,7 +87,18 @@ jobs:
           sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
+      - name: Fix FirebaseException import
+        run: |
+          FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
+          if [ -z "$FILE" ]; then
+            echo "MainActivity.java not found"
+            exit 1
+          fi
 
+          sed -i '/^import com.google.firebase.FirebaseException;/d' "$FILE"
+          sed -i '/^package com.shreema.gramshikayat;/a import com.google.firebase.FirebaseException;' "$FILE"
+
+          echo "FirebaseException import added"
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
