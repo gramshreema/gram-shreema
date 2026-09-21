@@ -41,7 +41,9 @@ jobs:
         run: |
           mkdir -p project
 
-          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project.zip" | head -1)
+          ZIP_FILE=$(find . -type f \
+            -name "ShreemaGram_GitHub_APK_Build_Project.zip" \
+            | head -1)
 
           if [ -z "$ZIP_FILE" ]; then
             echo "ERROR: Project ZIP not found."
@@ -53,7 +55,7 @@ jobs:
           unzip -o "$ZIP_FILE" -d project
 
           echo "===== EXTRACTED FILES ====="
-          find project -maxdepth 7 -type f | sort | head -300
+          find project -type f | head -300
           echo "==========================="
 
       - name: Find Gradle project
@@ -65,7 +67,6 @@ jobs:
 
           if [ -z "$SETTINGS_FILE" ]; then
             echo "ERROR: settings.gradle not found inside ZIP."
-            echo "===== PROJECT FILES ====="
             find project -type f | head -300
             exit 1
           fi
@@ -78,7 +79,7 @@ jobs:
           echo "$PROJECT_DIR"
           echo "=========================="
 
-      - name: Replace MainActivity with Gmail Login
+      - name: Replace MainActivity
         run: |
           FILE=$(find "$PROJECT_DIR" -type f \
             -path "*/app/src/main/java/com/shreema/gramshikayat/MainActivity.java" \
@@ -91,7 +92,7 @@ jobs:
             exit 1
           fi
 
-          echo "Replacing:"
+          echo "Replacing MainActivity:"
           echo "$FILE"
 
           cat > "$FILE" <<'EOF'
@@ -100,17 +101,21 @@ package com.shreema.gramshikayat;
 import android.app.Activity;
 import android.os.Bundle;
 import android.text.InputType;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends Activity {
 
-    FirebaseAuth auth;
+    private FirebaseAuth auth;
 
-    EditText email, password;
-    Button loginButton;
-    TextView status;
+    private EditText email;
+    private EditText password;
+    private Button loginButton;
+    private TextView status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,7 +166,7 @@ public class MainActivity extends Activity {
         loginButton.setOnClickListener(v -> login());
     }
 
-    void login() {
+    private void login() {
 
         String userEmail = email.getText().toString().trim();
         String userPassword = password.getText().toString().trim();
@@ -201,7 +206,7 @@ public class MainActivity extends Activity {
 }
 EOF
 
-          echo "Gmail MainActivity installed successfully."
+          echo "MainActivity replaced successfully."
 
       - name: Check MainActivity
         run: |
@@ -251,8 +256,6 @@ EOF
 
       - name: Find generated APK
         run: |
-          echo "===== SEARCHING FOR APK ====="
-
           APK_FILE=$(find "$PROJECT_DIR" -type f \
             -path "*/build/outputs/apk/debug/*.apk" | head -1)
 
