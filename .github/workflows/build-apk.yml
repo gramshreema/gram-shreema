@@ -24,7 +24,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK
         run: |
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
@@ -45,8 +45,8 @@ jobs:
             exit 1
           fi
 
-          echo "ZIP found: $ZIP_FILE"
           echo "ZIP_FILE=$ZIP_FILE" >> "$GITHUB_ENV"
+          echo "Using ZIP: $ZIP_FILE"
 
       - name: Extract Android project
         run: |
@@ -55,6 +55,7 @@ jobs:
 
           echo "===== PROJECT FILES ====="
           find project -type f | head -300
+          echo "========================="
 
       - name: Find Gradle project
         run: |
@@ -65,7 +66,6 @@ jobs:
 
           if [ -z "$SETTINGS_FILE" ]; then
             echo "ERROR: settings.gradle not found."
-            find project -type f | head -300
             exit 1
           fi
 
@@ -76,146 +76,98 @@ jobs:
           echo "Gradle project:"
           echo "$PROJECT_DIR"
 
-      - name: Replace MainActivity
+      - name: Create simple MainActivity
         run: |
-          FILE=$(find "$PROJECT_DIR" -type f \
-            -path "*/app/src/main/java/com/shreema/gramshikayat/MainActivity.java" \
-            | head -1)
+          FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
 
-          if [ -z "$FILE" ]; then
-            echo "ERROR: MainActivity.java not found."
-            find "$PROJECT_DIR" -type f -name "*.java" -print
-            exit 1
-          fi
+          mkdir -p "$(dirname "$FILE")"
 
-          echo "Replacing MainActivity:"
-          echo "$FILE"
-
-          cat > "$FILE" <<'EOF'
+          cat > "$FILE" <<'JAVA'
 package com.shreema.gramshikayat;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.InputType;
+import android.graphics.Color;
+import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.firebase.auth.FirebaseAuth;
-
 public class MainActivity extends Activity {
-
-    private FirebaseAuth auth;
-
-    private EditText email;
-    private EditText password;
-    private Button loginButton;
-    private TextView status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        auth = FirebaseAuth.getInstance();
-
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(30, 30, 30, 30);
+        layout.setGravity(Gravity.CENTER);
+        layout.setPadding(40, 40, 40, 40);
 
         TextView title = new TextView(this);
         title.setText("ग्राम श्रीमा");
-        title.setTextSize(28);
+        title.setTextSize(30);
+        title.setTextColor(Color.BLACK);
+        title.setGravity(Gravity.CENTER);
         layout.addView(title);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Gmail Login");
-        subtitle.setTextSize(20);
+        subtitle.setText("शिकायत ऐप");
+        subtitle.setTextSize(22);
+        subtitle.setGravity(Gravity.CENTER);
         layout.addView(subtitle);
 
-        email = new EditText(this);
+        EditText email = new EditText(this);
         email.setHint("Gmail / Email");
-        email.setInputType(
-                InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-        );
         layout.addView(email);
 
-        password = new EditText(this);
+        EditText password = new EditText(this);
         password.setHint("Password");
-        password.setInputType(
-                InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_PASSWORD
-        );
+        password.setInputType(129);
         layout.addView(password);
 
-        loginButton = new Button(this);
-        loginButton.setText("Login");
-        layout.addView(loginButton);
+        Button login = new Button(this);
+        login.setText("Login");
+        layout.addView(login);
 
-        status = new TextView(this);
+        TextView status = new TextView(this);
         status.setTextSize(16);
+        status.setGravity(Gravity.CENTER);
         layout.addView(status);
 
+        login.setOnClickListener(v -> {
+            String e = email.getText().toString().trim();
+            String p = password.getText().toString().trim();
+
+            if (e.isEmpty()) {
+                status.setText("Email डालें");
+            } else if (p.isEmpty()) {
+                status.setText("Password डालें");
+            } else {
+                status.setText("Login जानकारी दर्ज हो गई");
+            }
+        });
+
         setContentView(layout);
-
-        loginButton.setOnClickListener(v -> login());
-    }
-
-    private void login() {
-
-        String userEmail = email.getText().toString().trim();
-        String userPassword = password.getText().toString().trim();
-
-        if (userEmail.isEmpty()) {
-            status.setText("Email डालें");
-            return;
-        }
-
-        if (userPassword.isEmpty()) {
-            status.setText("Password डालें");
-            return;
-        }
-
-        loginButton.setEnabled(false);
-        status.setText("Login हो रहा है...");
-
-        auth.signInWithEmailAndPassword(userEmail, userPassword)
-                .addOnCompleteListener(task -> {
-
-                    loginButton.setEnabled(true);
-
-                    if (task.isSuccessful()) {
-                        status.setText("Login successful");
-                    } else {
-                        String message = "Login failed";
-
-                        if (task.getException() != null) {
-                            message = "Login failed: "
-                                    + task.getException().getMessage();
-                        }
-
-                        status.setText(message);
-                    }
-                });
     }
 }
-EOF
+JAVA
 
-          echo "MainActivity replaced successfully."
+          echo "MainActivity created successfully."
 
       - name: Check MainActivity
         run: |
           FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
 
           if [ ! -f "$FILE" ]; then
-            echo "ERROR: MainActivity.java missing."
+            echo "ERROR: MainActivity.java not found."
             exit 1
           fi
 
-          echo "===== MAIN ACTIVITY CHECK ====="
+          echo "===== MAIN ACTIVITY ====="
           head -20 "$FILE"
-          echo "==============================="
+          echo "========================="
 
       - name: Set app version
         run: |
@@ -227,6 +179,7 @@ EOF
           fi
 
           sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
+
           sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
 
           echo "===== VERSION ====="
@@ -237,8 +190,6 @@ EOF
           cd "$PROJECT_DIR"
 
           echo "===== BUILD START ====="
-          pwd
-          ls -la
 
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
@@ -259,6 +210,7 @@ EOF
 
           echo "===== APK FOUND ====="
           ls -lh "$APK_FILE"
+          echo "====================="
 
           echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
 
