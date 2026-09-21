@@ -98,7 +98,7 @@ jobs:
           sed -i '/^import com.google.firebase.FirebaseException;/d' "$FILE"
           sed -i '/^package com.shreema.gramshikayat;/a import com.google.firebase.FirebaseException;' "$FILE"
 
-                - name: Replace OTP with Email Login
+      - name: Replace OTP with Email Login
         run: |
           FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
 
