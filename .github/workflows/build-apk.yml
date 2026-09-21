@@ -29,7 +29,17 @@ jobs:
         with:
           gradle-version: '8.7'
           cache-disabled: true
+      - name: Save new MainActivity
+        run: |
+          MAIN_FILE=$(find . -type f -name "MainActivity.java" | head -1)
 
+          if [ -z "$MAIN_FILE" ]; then
+            echo "ERROR: New MainActivity.java not found."
+            exit 1
+          fi
+
+          echo "MAIN_FILE=$MAIN_FILE" >> "$GITHUB_ENV"
+          echo "Using: $MAIN_FILE"
       - name: Find project ZIP
         run: |
           echo "===== ZIP FILES ====="
