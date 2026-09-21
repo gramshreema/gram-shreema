@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -29,20 +29,18 @@ jobs:
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Find project ZIP
+      - name: Find ZIP
         run: |
           ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project.zip" | head -1)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: Project ZIP not found"
-            find . -type f -name "*.zip"
+            echo "ERROR: ZIP not found"
             exit 1
           fi
 
           echo "ZIP_FILE=$ZIP_FILE" >> "$GITHUB_ENV"
-          echo "Found: $ZIP_FILE"
 
-      - name: Extract Android project
+      - name: Extract project
         run: |
           mkdir -p project
           unzip -o "$ZIP_FILE" -d project
@@ -61,32 +59,34 @@ jobs:
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-          echo "Gradle project: $PROJECT_DIR"
+          echo "PROJECT: $PROJECT_DIR"
 
-      - name: Check Android project
+      - name: Check project
         run: |
           cd "$PROJECT_DIR"
-
           echo "===== PROJECT ====="
           ls -la
           echo "==================="
 
-         
+          test -f settings.gradle
+          test -f app/build.gradle
 
-          if [ ! -f "./app/build.gradle" ]; then
-            echo "ERROR: app/build.gradle not found"
-            exit 1
-          fi
+      - name: Install Gradle
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gradle
+
       - name: Set app version
         run: |
           GRADLE_FILE="$PROJECT_DIR/app/build.gradle"
 
           sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
+
           sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
 
-     - name: Build APK
+      - name: Build APK
         run: |
           cd "$PROJECT_DIR"
 
@@ -100,15 +100,13 @@ jobs:
             | head -1)
 
           if [ -z "$APK_FILE" ]; then
-            echo "ERROR: APK not found"
+            echo "ERROR: APK not generated"
             exit 1
           fi
 
           echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
 
-          echo "===== APK FOUND ====="
           ls -lh "$APK_FILE"
-          echo "===================="
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
