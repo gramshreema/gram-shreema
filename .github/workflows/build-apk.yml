@@ -8,26 +8,20 @@ on:
 
 jobs:
   build:
-    name: Build Gram Shreema APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
+      - name: Set up Android
         uses: android-actions/setup-android@v4
-
-      - name: Install Android SDK
-        run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -35,162 +29,33 @@ jobs:
           gradle-version: '8.7'
           cache-disabled: true
 
-      - name: Find project ZIP
+      - name: Find ZIP
         run: |
-          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project.zip" | head -1)
-
-          if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: Project ZIP not found."
-            find . -type f -name "*.zip" -print
+          ZIP=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project.zip" | head -1)
+          if [ -z "$ZIP" ]; then
+            echo "ZIP file not found"
             exit 1
           fi
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
 
-          echo "ZIP_FILE=$ZIP_FILE" >> "$GITHUB_ENV"
-          echo "Using ZIP: $ZIP_FILE"
-
-      - name: Extract Android project
+      - name: Extract project
         run: |
           mkdir -p project
-          unzip -o "$ZIP_FILE" -d project
-
-          echo "===== PROJECT FILES ====="
-          find project -type f | head -300
-          echo "========================="
+          unzip -o "$ZIP" -d project
 
       - name: Find Gradle project
         run: |
-          SETTINGS_FILE=$(find project -type f \( \
-            -name "settings.gradle" \
-            -o -name "settings.gradle.kts" \
-          \) | head -1)
-
-          if [ -z "$SETTINGS_FILE" ]; then
-            echo "ERROR: settings.gradle not found."
+          SETTINGS=$(find project -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) | head -1)
+          if [ -z "$SETTINGS" ]; then
+            echo "settings.gradle not found"
             exit 1
           fi
-
-          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
-
+          PROJECT_DIR=$(dirname "$SETTINGS")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-          echo "Gradle project:"
-          echo "$PROJECT_DIR"
-
-      - name: Create simple MainActivity
-        run: |
-          FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
-
-          mkdir -p "$(dirname "$FILE")"
-
-          cat > "$FILE" <<'JAVA'
-package com.shreema.gramshikayat;
-
-import android.app.Activity;
-import android.os.Bundle;
-import android.graphics.Color;
-import android.view.Gravity;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-public class MainActivity extends Activity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(40, 40, 40, 40);
-
-        TextView title = new TextView(this);
-        title.setText("ग्राम श्रीमा");
-        title.setTextSize(30);
-        title.setTextColor(Color.BLACK);
-        title.setGravity(Gravity.CENTER);
-        layout.addView(title);
-
-        TextView subtitle = new TextView(this);
-        subtitle.setText("शिकायत ऐप");
-        subtitle.setTextSize(22);
-        subtitle.setGravity(Gravity.CENTER);
-        layout.addView(subtitle);
-
-        EditText email = new EditText(this);
-        email.setHint("Gmail / Email");
-        layout.addView(email);
-
-        EditText password = new EditText(this);
-        password.setHint("Password");
-        password.setInputType(129);
-        layout.addView(password);
-
-        Button login = new Button(this);
-        login.setText("Login");
-        layout.addView(login);
-
-        TextView status = new TextView(this);
-        status.setTextSize(16);
-        status.setGravity(Gravity.CENTER);
-        layout.addView(status);
-
-        login.setOnClickListener(v -> {
-            String e = email.getText().toString().trim();
-            String p = password.getText().toString().trim();
-
-            if (e.isEmpty()) {
-                status.setText("Email डालें");
-            } else if (p.isEmpty()) {
-                status.setText("Password डालें");
-            } else {
-                status.setText("Login जानकारी दर्ज हो गई");
-            }
-        });
-
-        setContentView(layout);
-    }
-}
-JAVA
-
-          echo "MainActivity created successfully."
-
-      - name: Check MainActivity
-        run: |
-          FILE="$PROJECT_DIR/app/src/main/java/com/shreema/gramshikayat/MainActivity.java"
-
-          if [ ! -f "$FILE" ]; then
-            echo "ERROR: MainActivity.java not found."
-            exit 1
-          fi
-
-          echo "===== MAIN ACTIVITY ====="
-          head -20 "$FILE"
-          echo "========================="
-
-      - name: Set app version
-        run: |
-          GRADLE_FILE="$PROJECT_DIR/app/build.gradle"
-
-          if [ ! -f "$GRADLE_FILE" ]; then
-            echo "ERROR: app/build.gradle not found."
-            exit 1
-          fi
-
-          sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
-
-          sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
-
-          echo "===== VERSION ====="
-          grep -n "versionCode\|versionName" "$GRADLE_FILE"
-
-      - name: Build Debug APK
+      - name: Build APK
         run: |
           cd "$PROJECT_DIR"
-
-          echo "===== BUILD START ====="
-
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
             ./gradlew assembleDebug --stacktrace --no-daemon
@@ -198,25 +63,17 @@ JAVA
             gradle assembleDebug --stacktrace --no-daemon
           fi
 
-      - name: Find generated APK
+      - name: Find APK
         run: |
-          APK_FILE=$(find "$PROJECT_DIR" -type f \
-            -path "*/build/outputs/apk/debug/*.apk" | head -1)
-
-          if [ -z "$APK_FILE" ]; then
-            echo "ERROR: APK was not generated."
+          APK=$(find "$PROJECT_DIR" -type f -path "*/build/outputs/apk/debug/*.apk" | head -1)
+          if [ -z "$APK" ]; then
+            echo "APK not generated"
             exit 1
           fi
-
-          echo "===== APK FOUND ====="
-          ls -lh "$APK_FILE"
-          echo "====================="
-
-          echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
+          echo "APK=$APK" >> "$GITHUB_ENV"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: gram-shreema-debug-apk
-          path: ${{ env.APK_FILE }}
-          if-no-files-found: error
+          path: ${{ env.APK }}
