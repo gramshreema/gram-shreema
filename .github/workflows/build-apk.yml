@@ -77,7 +77,7 @@ jobs:
 
           echo "Gradle project found:"
           echo "$PROJECT_DIR"
-            - name: Replace MainActivity with Gmail Login
+      - name: Replace MainActivity with Gmail Login
         run: |
           FILE=$(find project -type f -path "*/app/src/main/java/com/shreema/gramshikayat/MainActivity.java" | head -1)
 
