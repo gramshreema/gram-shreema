@@ -87,7 +87,6 @@ jobs:
           sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
 
           grep -n "versionCode\|versionName" "$GRADLE_FILE"
-          
       - name: Replace OTP with Email Login
         run: |
           FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
@@ -104,8 +103,6 @@ import com.google.firebase.auth.FirebaseAuth;
 public class MainActivity extends Activity {
 
     FirebaseAuth auth;
-    EditText email, password;
-    Button loginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,28 +119,28 @@ public class MainActivity extends Activity {
         title.setTextSize(26);
         layout.addView(title);
 
-        email = new EditText(this);
+        EditText email = new EditText(this);
         email.setHint("Email ID");
         email.setInputType(InputType.TYPE_CLASS_TEXT |
                 InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         layout.addView(email);
 
-        password = new EditText(this);
+        EditText password = new EditText(this);
         password.setHint("Password");
         password.setInputType(InputType.TYPE_CLASS_TEXT |
                 InputType.TYPE_TEXT_VARIATION_PASSWORD);
         layout.addView(password);
 
-        loginButton = new Button(this);
-        loginButton.setText("Login");
-        layout.addView(loginButton);
+        Button login = new Button(this);
+        login.setText("Login");
+        layout.addView(login);
 
         TextView status = new TextView(this);
         layout.addView(status);
 
         setContentView(layout);
 
-        loginButton.setOnClickListener(v -> {
+        login.setOnClickListener(v -> {
 
             String e = email.getText().toString().trim();
             String p = password.getText().toString().trim();
@@ -153,19 +150,18 @@ public class MainActivity extends Activity {
                 return;
             }
 
-            loginButton.setEnabled(false);
+            login.setEnabled(false);
             status.setText("Login हो रहा है...");
 
             auth.signInWithEmailAndPassword(e, p)
                     .addOnCompleteListener(task -> {
 
-                        loginButton.setEnabled(true);
+                        login.setEnabled(true);
 
                         if (task.isSuccessful()) {
                             status.setText("Login सफल हुआ");
                         } else {
-                            status.setText("Login असफल: " +
-                                    task.getException().getMessage());
+                            status.setText("Login असफल");
                         }
                     });
         });
@@ -173,7 +169,11 @@ public class MainActivity extends Activity {
 }
 EOF
 
-          echo "Email + Password Login installed."
+      - name: Build APK
+        run: |
+          cd "$PROJECT_DIR"
+
+          gradle clean assembleDebug --no-daemon --stacktrace
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
