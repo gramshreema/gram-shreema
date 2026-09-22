@@ -78,107 +78,6 @@ jobs:
           echo "$PWD/gradle-8.7/bin" >> "$GITHUB_PATH"
           gradle --version
 
-      - name: Set app version
-        run: |
-          GRADLE_FILE="$PROJECT_DIR/app/build.gradle"
-
-          sed -i 's/versionCode[[:space:]]*[0-9]*/versionCode 3/' "$GRADLE_FILE"
-
-          sed -i "s/versionName[[:space:]]*[\"'][^\"']*[\"']/versionName \"3.0\"/" "$GRADLE_FILE"
-
-          grep -n "versionCode\|versionName" "$GRADLE_FILE"
-
-      - name: Replace OTP with Email Login
-        run: |
-          FILE=$(find "$PROJECT_DIR" -type f -name "MainActivity.java" | head -1)
-
-          if [ -z "$FILE" ]; then
-            echo "ERROR: MainActivity.java not found"
-            exit 1
-          fi
-
-          cat > "$FILE" <<'EOF'
-package com.shreema.gramshikayat;
-
-import android.app.Activity;
-import android.os.Bundle;
-import android.text.InputType;
-import android.widget.*;
-import com.google.firebase.auth.FirebaseAuth;
-
-public class MainActivity extends Activity {
-
-    FirebaseAuth auth;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        auth = FirebaseAuth.getInstance();
-
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(30, 30, 30, 30);
-
-        TextView title = new TextView(this);
-        title.setText("ग्राम श्रीमा शिकायत ऐप");
-        title.setTextSize(26);
-        layout.addView(title);
-
-        EditText email = new EditText(this);
-        email.setHint("Email ID");
-        email.setInputType(
-                InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-        );
-        layout.addView(email);
-
-        EditText password = new EditText(this);
-        password.setHint("Password");
-        password.setInputType(
-                InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_PASSWORD
-        );
-        layout.addView(password);
-
-        Button login = new Button(this);
-        login.setText("Login");
-        layout.addView(login);
-
-        TextView status = new TextView(this);
-        layout.addView(status);
-
-        setContentView(layout);
-
-        login.setOnClickListener(v -> {
-
-            String e = email.getText().toString().trim();
-            String p = password.getText().toString().trim();
-
-            if (e.isEmpty() || p.isEmpty()) {
-                status.setText("Email और Password डालें");
-                return;
-            }
-
-            login.setEnabled(false);
-            status.setText("Login हो रहा है...");
-
-            auth.signInWithEmailAndPassword(e, p)
-                    .addOnCompleteListener(task -> {
-
-                        login.setEnabled(true);
-
-                        if (task.isSuccessful()) {
-                            status.setText("Login सफल हुआ");
-                        } else {
-                            status.setText("Login असफल");
-                        }
-                    });
-        });
-    }
-}
-EOF
-
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
@@ -197,7 +96,6 @@ EOF
           fi
 
           echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
-
           ls -lh "$APK_FILE"
 
       - name: Upload APK
