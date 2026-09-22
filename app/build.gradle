@@ -1,0 +1,25 @@
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+}
+
+android {
+    namespace 'com.shreema.gramshikayat'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.shreema.gramshikayat'
+        minSdk 23
+        targetSdk 36
+        versionCode 2
+        versionName '2.0'
+    }
+}
+
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:34.2.0')
+
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+}
