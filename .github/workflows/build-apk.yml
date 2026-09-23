@@ -8,7 +8,15 @@ on:
 
 jobs:
   build:
-    name: Build APK
+      - name: Build APK
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug
+          else
+            echo "Gradle wrapper नहीं मिला"
+            exit 1
+          fi
     runs-on: ubuntu-latest
 
     steps:
