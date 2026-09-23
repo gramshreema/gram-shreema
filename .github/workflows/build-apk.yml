@@ -1,4 +1,4 @@
-name: Build Shreema APK
+name: Build Gram Shreema APK
 
 on:
   workflow_dispatch:
@@ -8,99 +8,50 @@ on:
 
 jobs:
   build:
-    name: Build Gram Shreema APK
+    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
 
       - name: Install Android SDK
         run: |
           yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-36"
+          sdkmanager "build-tools;36.0.0"
 
-      - name: Find ZIP
+      - name: Find project
         run: |
-          ZIP_FILE=$(find . -type f -name "ShreemaGram_GitHub_APK_Build_Project.zip" | head -1)
-
-          if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: ZIP not found"
-            exit 1
-          fi
-
-          echo "ZIP_FILE=$ZIP_FILE" >> "$GITHUB_ENV"
-
-      - name: Extract project
-        run: |
-          mkdir -p project
-          unzip -o "$ZIP_FILE" -d project
-
-      - name: Find Gradle project
-        run: |
-          SETTINGS_FILE=$(find project -type f \
-            \( -name "settings.gradle" -o -name "settings.gradle.kts" \) \
-            | head -1)
-
-          if [ -z "$SETTINGS_FILE" ]; then
-            echo "ERROR: settings.gradle not found"
-            exit 1
-          fi
-
-          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
-          echo "PROJECT: $PROJECT_DIR"
-
-      - name: Check project
-        run: |
-          cd "$PROJECT_DIR"
-          echo "===== PROJECT ====="
-          ls -la
-          echo "==================="
-
-          test -f settings.gradle
-          test -f app/build.gradle
-
-      - name: Install Gradle
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
-          unzip -q gradle-8.7-bin.zip
-          echo "$PWD/gradle-8.7/bin" >> "$GITHUB_PATH"
-          gradle --version
+          find . -maxdepth 3 -type f | head -100
 
       - name: Build APK
         run: |
-          cd "$PROJECT_DIR"
-          gradle clean assembleDebug --no-daemon --stacktrace
-
-      - name: Find APK
-        run: |
-          APK_FILE=$(find "$PROJECT_DIR" \
-            -type f \
-            -path "*/build/outputs/apk/debug/*.apk" \
-            | head -1)
-
-          if [ -z "$APK_FILE" ]; then
-            echo "ERROR: APK not generated"
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug
+          elif [ -f "./project/gradlew" ]; then
+            cd project
+            chmod +x ./gradlew
+            ./gradlew assembleDebug
+          else
+            echo "gradlew file नहीं मिला"
             exit 1
           fi
-
-          echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
-          ls -lh "$APK_FILE"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: gram-shreema-debug-apk
-          path: ${{ env.APK_FILE }}
-          if-no-files-found: error
+          path: |
+            **/build/outputs/apk/debug/*.apk
