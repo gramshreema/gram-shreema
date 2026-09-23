@@ -8,19 +8,8 @@ on:
 
 jobs:
   build:
-      - name: Generate Gradle Wrapper
-        run: |
-          gradle wrapper --gradle-version 8.7   
-      - name: Build APK
-        run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug
-          else
-            echo "Gradle wrapper नहीं मिला"
-            exit 1
-          fi
-  runs-on: ubuntu-latest
+    name: Build APK
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -42,27 +31,17 @@ jobs:
           sdkmanager "platforms;android-36"
           sdkmanager "build-tools;36.0.0"
 
-      - name: Find project
+      - name: Generate Gradle Wrapper
         run: |
-          find . -maxdepth 3 -type f | head -100
+          gradle wrapper --gradle-version 8.7
 
       - name: Build APK
         run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug
-          elif [ -f "./project/gradlew" ]; then
-            cd project
-            chmod +x ./gradlew
-            ./gradlew assembleDebug
-          else
-            echo "gradlew file नहीं मिला"
-            exit 1
-          fi
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: gram-shreema-debug-apk
-          path: |
-            **/build/outputs/apk/debug/*.apk
+          path: "**/build/outputs/apk/debug/*.apk"
