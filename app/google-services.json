@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "76234659699",
+    "project_id": "xenon-heading-458814-d8",
+    "storage_bucket": "xenon-heading-458814-d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:76234659699:android:601c0db14009acf3a35706",
+        "android_client_info": {
+          "package_name": "com.shreema.gramshikayat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwVfkKPzUrqIIdoyr53enFT2LWwPpAlVo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
