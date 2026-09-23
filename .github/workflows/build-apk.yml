@@ -8,6 +8,9 @@ on:
 
 jobs:
   build:
+      - name: Generate Gradle Wrapper
+        run: |
+          gradle wrapper --gradle-version 8.7   
       - name: Build APK
         run: |
           if [ -f "./gradlew" ]; then
@@ -17,7 +20,7 @@ jobs:
             echo "Gradle wrapper नहीं मिला"
             exit 1
           fi
-    runs-on: ubuntu-latest
+  runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
