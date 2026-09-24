@@ -44,6 +44,7 @@ jobs:
         run: |
           ls -lh app/build/outputs/apk/debug/
           $ANDROID_HOME/build-tools/36.0.0/aapt dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "package:|launchable-activity:"
+                    unzip -l app/build/outputs/apk/debug/app-debug.apk | grep classes.dex
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
