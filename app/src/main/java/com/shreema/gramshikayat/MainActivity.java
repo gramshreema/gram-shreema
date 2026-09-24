@@ -681,10 +681,21 @@ public class MainActivity extends Activity {
 
         if (requestCode == REQ_CAMERA) {
 
-            if (resultCode == RESULT_OK &&
-                cameraUri != null &&
-                pendingComplaintId != null) {
-                    }
+    if (resultCode == RESULT_OK &&
+        cameraUri != null &&
+        pendingComplaintId != null) {
+
+        uploadClosurePhoto();
+
+    } else {
+
+        Toast.makeText(
+            this,
+            "फोटो नहीं ली गई",
+            Toast.LENGTH_SHORT
+        ).show();
+    }
         }
+    }
 
                
