@@ -694,9 +694,89 @@ public class MainActivity extends Activity {
                     "फोटो नहीं ली गई",
                     Toast.LENGTH_SHORT
                 ).show();
-            }
-        }
+                    }
     }
-}
 
-               
+    void uploadClosurePhoto() {
+
+        Toast.makeText(
+            this,
+            "फोटो अपलोड हो रही है...",
+            Toast.LENGTH_SHORT
+        ).show();
+
+        StorageReference ref =
+            storage.getReference()
+                .child("complaints")
+                .child(pendingComplaintId)
+                .child(
+                    "closure_" +
+                    System.currentTimeMillis() +
+                    ".jpg"
+                );
+
+        ref.putFile(cameraUri)
+            .continueWithTask(task -> {
+
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                return ref.getDownloadUrl();
+
+            })
+            .addOnSuccessListener(url -> {
+
+                Map<String,Object> m =
+                    new HashMap<>();
+
+                m.put("status", "समाधान");
+                m.put(
+                    "closureDetails",
+                    pendingClosureDetails
+                );
+                m.put(
+                    "closurePhotoUrl",
+                    url.toString()
+                );
+                m.put(
+                    "closedAt",
+                    FieldValue.serverTimestamp()
+                );
+                m.put(
+                    "closedBy",
+                    auth.getUid()
+                );
+
+                db.collection("complaints")
+                    .document(pendingComplaintId)
+                    .update(m)
+                    .addOnSuccessListener(v -> {
+
+                        Toast.makeText(
+                            this,
+                            "शिकायत फोटो और विवरण के साथ क्लोज हो गई",
+                            Toast.LENGTH_LONG
+                        ).show();
+
+                        admin();
+                    })
+                    .addOnFailureListener(e ->
+                        Toast.makeText(
+                            this,
+                            "विवरण सेव नहीं हुआ: " +
+                            e.getMessage(),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    );
+            })
+            .addOnFailureListener(e ->
+                Toast.makeText(
+                    this,
+                    "फोटो अपलोड नहीं हुई: " +
+                    e.getMessage(),
+                    Toast.LENGTH_LONG
+                ).show()
+            );
+    }
+            }
