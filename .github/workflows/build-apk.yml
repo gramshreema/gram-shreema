@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -38,17 +38,15 @@ jobs:
       - name: Build APK
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug
+          ./gradlew clean assembleDebug
 
       - name: Check APK
         run: |
           ls -lh app/build/outputs/apk/debug/
           $ANDROID_HOME/build-tools/36.0.0/aapt dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "package:|launchable-activity:"
-                    unzip -l app/build/outputs/apk/debug/app-debug.apk | grep classes.dex
-                              unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -E "classes.dex|resources.arsc"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: gram-shreema-debug-apk-check
-          path: "**/build/outputs/apk/debug/*.apk"
+          name: gram-shreema-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
