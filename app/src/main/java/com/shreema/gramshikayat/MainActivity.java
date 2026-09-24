@@ -684,5 +684,7 @@ public class MainActivity extends Activity {
             if (resultCode == RESULT_OK &&
                 cameraUri != null &&
                 pendingComplaintId != null) {
+                    }
+        }
 
                
