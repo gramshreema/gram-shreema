@@ -613,32 +613,38 @@ void trackById(String complaintId) {
 
     body.addView(status);
 
-    Button homeButton = button("🏠 होम पर जाएँ");
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
+
     body.addView(homeButton);
 
     homeButton.setOnClickListener(
             click -> home());
 
-    FirebaseUser user = auth.getCurrentUser();
+    FirebaseUser user =
+            auth.getCurrentUser();
 
     if (user == null) {
         status.setText("पहले Login करें");
         return;
     }
 
-    String id = complaintId.trim();
-
     db.collection("complaints")
-            .whereEqualTo("userId", user.getUid())
             .get()
             .addOnSuccessListener(result -> {
 
                 DocumentSnapshot found = null;
 
+                String searchId =
+                        complaintId.trim();
+
                 for (DocumentSnapshot d :
                         result.getDocuments()) {
 
-                    if (d.getId().trim().equals(id)) {
+                    String documentId =
+                            d.getId().trim();
+
+                    if (documentId.equals(searchId)) {
                         found = d;
                         break;
                     }
@@ -653,7 +659,7 @@ void trackById(String complaintId) {
                     status.setText(
                             "शिकायत नहीं मिली\n\n" +
                             "कृपया Complaint ID सही डालें:\n\n" +
-                            id);
+                            searchId);
                 }
 
             })
@@ -663,7 +669,7 @@ void trackById(String complaintId) {
                         "डेटा प्राप्त नहीं हुआ:\n" +
                         e.getMessage());
             });
-            }
+                        }
 
     // =========================
     // SHOW COMPLAINT
