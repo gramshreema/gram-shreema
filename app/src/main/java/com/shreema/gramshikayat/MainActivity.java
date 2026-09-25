@@ -605,94 +605,48 @@ public class MainActivity extends Activity {
 
     void trackById(String complaintId) {
 
-        screen("शिकायत की स्थिति");
+    screen("शिकायत की स्थिति");
 
-        status =
-                text(
-                        "शिकायत खोजी जा रही है...",
-                        16);
+    status = text(
+            "शिकायत खोजी जा रही है...",
+            16);
 
-        body.addView(status);
+    body.addView(status);
 
-        Button homeButton =
-                button("🏠 होम पर जाएँ");
+    Button homeButton = button("🏠 होम पर जाएँ");
+    body.addView(homeButton);
 
-        body.addView(homeButton);
+    homeButton.setOnClickListener(
+            click -> home());
 
-        homeButton.setOnClickListener(
-                v -> home());
+    String id = complaintId.trim();
 
-        // पहले सीधे Complaint ID से खोजें
-        db.collection("complaints")
-                .document(complaintId)
-                .get()
-                .addOnSuccessListener(document -> {
+    if (id.isEmpty()) {
+        status.setText("कृपया शिकायत ID डालें");
+        return;
+    }
 
-                    if (document.exists()) {
+    db.collection("complaints")
+            .document(id)
+            .get()
+            .addOnSuccessListener(document -> {
 
-                        showComplaint(document);
-
-                    } else {
-
-                        // अगर सीधे नहीं मिली,
-                        // तो Login User की शिकायतों में खोजें
-                        FirebaseUser user =
-                                auth.getCurrentUser();
-
-                        if (user == null) {
-
-                            status.setText(
-                                    "पहले Login करें");
-                            return;
-                        }
-
-                        db.collection("complaints")
-                                .whereEqualTo(
-                                        "userId",
-                                        user.getUid())
-                                .get()
-                                .addOnSuccessListener(result -> {
-
-                                    DocumentSnapshot found =
-                                            null;
-
-                                    for (
-                                            DocumentSnapshot d :
-                                            result.getDocuments()) {
-
-                                        if (d.getId().trim()
-                                                .equals(
-                                                        complaintId.trim())) {
-
-                                            found = d;
-                                            break;
-                                        }
-                                    }
-
-                                    if (found != null) {
-
-                                        showComplaint(found);
-
-                                    } else {
-
-                                        status.setText(
-                                                "शिकायत नहीं मिली");
-                                    }
-                                })
-                                .addOnFailureListener(e -> {
-
-                                    status.setText(
-                                            "डेटा प्राप्त नहीं हुआ:\n" +
-                                            e.getMessage());
-                                });
-                    }
-                })
-                .addOnFailureListener(e -> {
-
+                if (document.exists()) {
+                    showComplaint(document);
+                } else {
                     status.setText(
-                            "डेटा प्राप्त नहीं हुआ:\n" +
-                            e.getMessage());
-                });
+                            "शिकायत नहीं मिली\n\n" +
+                            "कृपया Complaint ID सही डालें:\n" +
+                            id);
+                }
+
+            })
+            .addOnFailureListener(e -> {
+
+                status.setText(
+                        "डेटा प्राप्त नहीं हुआ:\n" +
+                        e.getMessage());
+            });
     }
 
     // =========================
