@@ -543,108 +543,106 @@ goHome.setOnClickListener(
     // =========================
     // TRACK
     // =========================
+void track() {
 
-    void track() {
+    screen("शिकायत की स्थिति");
 
-        screen("शिकायत की स्थिति");
+    EditText id = new EditText(this);
+    id.setHint("Complaint ID");
+    body.addView(id);
 
-        EditText id =
-                new EditText(this);
+    Button search =
+            button("🔎 स्थिति देखें");
+    body.addView(search);
 
-        id.setHint("Complaint ID");
-        body.addView(id);
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
+    body.addView(homeButton);
 
-        Button search =
-                button("🔎 स्थिति देखें");
+    status = text("", 16);
+    body.addView(status);
 
-        body.addView(search);
+    search.setOnClickListener(v -> {
 
-        Button home =
-                button("🏠 होम पर जाएँ");
+        String complaintId =
+                id.getText()
+                        .toString()
+                        .trim();
 
-        body.addView(home);
+        if (complaintId.isEmpty()) {
 
-        status = text("", 16);
-        body.addView(status);
+            status.setText(
+                    "Complaint ID डालें");
+            return;
+        }
 
-        search.setOnClickListener(v -> {
+        trackById(complaintId);
+    });
 
-            String complaintId =
-                    id.getText()
-                            .toString()
-                            .trim();
+    homeButton.setOnClickListener(
+            v -> home());
+}
 
-            if (complaintId.isEmpty()) {
 
-                status.setText(
-                        "Complaint ID डालें");
-                return;
-            }
+// =========================
+// TRACK BY ID
+// =========================
 
-            trackById(complaintId);
-        });
+void trackById(String complaintId) {
 
-        home.setOnClickListener(
-                v -> home());
-    }
+    screen("शिकायत की स्थिति");
 
-    // =========================
-    // TRACK BY ID
-    // =========================
+    status =
+            text("शिकायत खोजी जा रही है...", 16);
 
-    void trackById(String complaintId) {
+    body.addView(status);
 
-        screen("शिकायत की स्थिति");
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
 
-        status =
-                text("शिकायत खोजी जा रही है...", 16);
+    body.addView(homeButton);
 
-        body.addView(status);
+    homeButton.setOnClickListener(
+            v -> home());
 
-        Button home =
-                button("🏠 होम पर जाएँ");
+    db.collection("complaints")
+            .whereEqualTo(
+                    com.google.firebase.firestore.FieldPath.documentId(),
+                    complaintId)
+            .limit(1)
+            .get()
+            .addOnSuccessListener(result -> {
 
-        body.addView(home);
+                if (!result.isEmpty()) {
 
-        home.setOnClickListener(
-                v -> home());
-
-        db.collection("complaints")
-                .document(complaintId)
-                .get()
-                .addOnSuccessListener(document -> {
-
-                    if (document.exists()) {
-
-                        status.setText(
-                                "Complaint ID:\n" +
-                                document.getId() +
-                                "\n\nस्थिति: " +
-                                document.getString(
-                                        "status") +
-                                "\n\nश्रेणी: " +
-                                document.getString(
-                                        "category") +
-                                "\n\nसमस्या: " +
-                                document.getString(
-                                        "details") +
-                                "\n\nस्थान: " +
-                                document.getString(
-                                        "location"));
-
-                    } else {
-
-                        status.setText(
-                                "शिकायत नहीं मिली");
-                    }
-                })
-                .addOnFailureListener(e -> {
+                    DocumentSnapshot document =
+                            result.getDocuments().get(0);
 
                     status.setText(
-                            "डेटा प्राप्त नहीं हुआ:\n" +
-                            e.getMessage());
-                });
-    }
+                            "Complaint ID:\n" +
+                            document.getId() +
+                            "\n\nस्थिति: " +
+                            document.getString("status") +
+                            "\n\nश्रेणी: " +
+                            document.getString("category") +
+                            "\n\nसमस्या: " +
+                            document.getString("details") +
+                            "\n\nस्थान: " +
+                            document.getString("location"));
+
+                } else {
+
+                    status.setText(
+                            "शिकायत नहीं मिली");
+                }
+            })
+            .addOnFailureListener(e -> {
+
+                status.setText(
+                        "डेटा प्राप्त नहीं हुआ:\n" +
+                        e.getMessage());
+            });
+}
 
     // =========================
     // MY COMPLAINTS
