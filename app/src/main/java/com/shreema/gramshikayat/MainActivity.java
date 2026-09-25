@@ -29,6 +29,8 @@ public class MainActivity extends Activity {
     Spinner category;
     TextView status;
 
+    String lastComplaintId = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -329,8 +331,8 @@ public class MainActivity extends Activity {
         body.addView(
                 text(
                         "यदि आपको अपना Login Email याद नहीं है,\n\n" +
-                        "तो उस Email के Inbox में Firebase से आया " +
-                        "Account/Password संबंधी संदेश देखें।\n\n" +
+                        "तो अपने Email खातों में Firebase से आए " +
+                        "संदेश खोजें।\n\n" +
                         "सुरक्षा कारणों से ऐप किसी User का Email " +
                         "बिना पहचान सत्यापन के नहीं दिखाएगा।",
                         18));
@@ -504,10 +506,30 @@ public class MainActivity extends Activity {
                     .add(data)
                     .addOnSuccessListener(document -> {
 
+                        lastComplaintId =
+                                document.getId();
+
                         status.setText(
                                 "✅ शिकायत दर्ज हो गई।\n\n" +
                                 "Complaint ID:\n" +
-                                document.getId());
+                                lastComplaintId);
+
+                        Button viewStatus =
+                                button(
+                                        "🔎 इसी शिकायत की स्थिति देखें");
+
+                        Button goHome =
+                                button(
+                                        "🏠 होम पर जाएँ");
+
+                        body.addView(viewStatus);
+                        body.addView(goHome);
+
+                        viewStatus.setOnClickListener(
+                                v -> trackById(lastComplaintId));
+
+                        goHome.setOnClickListener(
+                                v -> home());
                     })
                     .addOnFailureListener(e -> {
 
@@ -537,6 +559,11 @@ public class MainActivity extends Activity {
 
         body.addView(search);
 
+        Button home =
+                button("🏠 होम पर जाएँ");
+
+        body.addView(home);
+
         status = text("", 16);
         body.addView(status);
 
@@ -554,37 +581,69 @@ public class MainActivity extends Activity {
                 return;
             }
 
-            db.collection("complaints")
-                    .document(complaintId)
-                    .get()
-                    .addOnSuccessListener(document -> {
+            trackById(complaintId);
+        });
 
-                        if (document.exists()) {
+        home.setOnClickListener(
+                v -> home());
+    }
 
-                            status.setText(
-                                    "स्थिति: " +
-                                    document.getString(
-                                            "status") +
-                                    "\n\nश्रेणी: " +
-                                    document.getString(
-                                            "category") +
-                                    "\n\nसमस्या: " +
-                                    document.getString(
-                                            "details"));
+    // =========================
+    // TRACK BY ID
+    // =========================
 
-                        } else {
+    void trackById(String complaintId) {
 
-                            status.setText(
-                                    "शिकायत नहीं मिली");
-                        }
-                    })
-                    .addOnFailureListener(e -> {
+        screen("शिकायत की स्थिति");
+
+        status =
+                text("शिकायत खोजी जा रही है...", 16);
+
+        body.addView(status);
+
+        Button home =
+                button("🏠 होम पर जाएँ");
+
+        body.addView(home);
+
+        home.setOnClickListener(
+                v -> home());
+
+        db.collection("complaints")
+                .document(complaintId)
+                .get()
+                .addOnSuccessListener(document -> {
+
+                    if (document.exists()) {
 
                         status.setText(
-                                "डेटा प्राप्त नहीं हुआ:\n" +
-                                e.getMessage());
-                    });
-        });
+                                "Complaint ID:\n" +
+                                document.getId() +
+                                "\n\nस्थिति: " +
+                                document.getString(
+                                        "status") +
+                                "\n\nश्रेणी: " +
+                                document.getString(
+                                        "category") +
+                                "\n\nसमस्या: " +
+                                document.getString(
+                                        "details") +
+                                "\n\nस्थान: " +
+                                document.getString(
+                                        "location"));
+
+                    } else {
+
+                        status.setText(
+                                "शिकायत नहीं मिली");
+                    }
+                })
+                .addOnFailureListener(e -> {
+
+                    status.setText(
+                            "डेटा प्राप्त नहीं हुआ:\n" +
+                            e.getMessage());
+                });
     }
 
     // =========================
@@ -594,6 +653,14 @@ public class MainActivity extends Activity {
     void mine() {
 
         screen("मेरी शिकायतें");
+
+        Button home =
+                button("🏠 होम पर जाएँ");
+
+        body.addView(home);
+
+        home.setOnClickListener(
+                v -> home());
 
         status =
                 text("लोड हो रहा है...", 16);
@@ -640,10 +707,24 @@ public class MainActivity extends Activity {
                                         "category") +
                                 "\nस्थिति: " +
                                 d.getString(
-                                        "status");
+                                        "status") +
+                                "\n\n";
 
                         body.addView(
                                 text(info, 17));
+
+                        Button view =
+                                button(
+                                        "🔎 स्थिति देखें");
+
+                        body.addView(view);
+
+                        String complaintId =
+                                d.getId();
+
+                        view.setOnClickListener(
+                                v -> trackById(
+                                        complaintId));
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -653,4 +734,4 @@ public class MainActivity extends Activity {
                             e.getMessage());
                 });
     }
-            }
+                                           }
