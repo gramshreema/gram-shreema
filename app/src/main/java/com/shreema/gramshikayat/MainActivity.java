@@ -3,11 +3,11 @@ package com.shreema.gramshikayat;
 import android.app.Activity;
 import android.os.Bundle;
 import android.graphics.Color;
+import android.text.InputType;
 import android.widget.*;
-import android.view.View;
 
-import com.google.firebase.FirebaseException;
-import com.google.firebase.auth.*;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.*;
 
 import java.util.HashMap;
@@ -19,11 +19,15 @@ public class MainActivity extends Activity {
     FirebaseFirestore db;
 
     LinearLayout body;
-    EditText phone, otp, name, details, location;
+
+    EditText email;
+    EditText password;
+    EditText name;
+    EditText details;
+    EditText location;
+
     Spinner category;
     TextView status;
-
-    String verificationId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +78,7 @@ public class MainActivity extends Activity {
         body.setOrientation(LinearLayout.VERTICAL);
 
         scroll.addView(body);
+
         root.addView(
                 scroll,
                 new LinearLayout.LayoutParams(
@@ -82,129 +87,266 @@ public class MainActivity extends Activity {
         setContentView(root);
     }
 
+    // =========================
+    // LOGIN
+    // =========================
+
     void login() {
 
-        screen("मोबाइल OTP लॉगिन");
+        screen("Email + Password लॉगिन");
 
-        phone = new EditText(this);
-        phone.setHint("10 अंकों का मोबाइल नंबर");
-        phone.setInputType(3);
-        body.addView(phone);
+        email = new EditText(this);
+        email.setHint("Email डालें");
+        email.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        body.addView(email);
 
-        Button send = button("OTP भेजें");
+        password = new EditText(this);
+        password.setHint("Password डालें");
+        password.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        body.addView(password);
+
+        Button login =
+                button("🔐 लॉगिन करें");
+        body.addView(login);
+
+        Button register =
+                button("📝 नया अकाउंट बनाएँ");
+        body.addView(register);
+
+        Button forgotPassword =
+                button("🔑 Password भूल गए?");
+        body.addView(forgotPassword);
+
+        Button forgotEmail =
+                button("📧 Email भूल गए?");
+        body.addView(forgotEmail);
+
+        status = text("", 16);
+        body.addView(status);
+
+        login.setOnClickListener(v -> {
+
+            String e =
+                    email.getText()
+                            .toString()
+                            .trim();
+
+            String p =
+                    password.getText()
+                            .toString()
+                            .trim();
+
+            if (e.isEmpty() || p.isEmpty()) {
+
+                status.setText(
+                        "Email और Password डालें");
+                return;
+            }
+
+            auth.signInWithEmailAndPassword(e, p)
+                    .addOnCompleteListener(task -> {
+
+                        if (task.isSuccessful()) {
+                            home();
+                        } else {
+                            status.setText(
+                                    "लॉगिन नहीं हुआ:\n" +
+                                    task.getException()
+                                            .getMessage());
+                        }
+                    });
+        });
+
+        register.setOnClickListener(
+                v -> register());
+
+        forgotPassword.setOnClickListener(
+                v -> forgotPassword());
+
+        forgotEmail.setOnClickListener(
+                v -> forgotEmail());
+    }
+
+    // =========================
+    // REGISTER
+    // =========================
+
+    void register() {
+
+        screen("नया अकाउंट बनाएँ");
+
+        email = new EditText(this);
+        email.setHint("Email डालें");
+        email.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        body.addView(email);
+
+        password = new EditText(this);
+        password.setHint(
+                "Password डालें (कम से कम 6 अक्षर)");
+        password.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        body.addView(password);
+
+        Button create =
+                button("✅ अकाउंट बनाएँ");
+        body.addView(create);
+
+        Button back =
+                button("⬅️ वापस लॉगिन");
+        body.addView(back);
+
+        status = text("", 16);
+        body.addView(status);
+
+        create.setOnClickListener(v -> {
+
+            String e =
+                    email.getText()
+                            .toString()
+                            .trim();
+
+            String p =
+                    password.getText()
+                            .toString()
+                            .trim();
+
+            if (e.isEmpty() || p.isEmpty()) {
+
+                status.setText(
+                        "Email और Password डालें");
+                return;
+            }
+
+            if (p.length() < 6) {
+
+                status.setText(
+                        "Password कम से कम 6 अक्षर का होना चाहिए");
+                return;
+            }
+
+            auth.createUserWithEmailAndPassword(e, p)
+                    .addOnCompleteListener(task -> {
+
+                        if (task.isSuccessful()) {
+                            home();
+                        } else {
+                            status.setText(
+                                    "अकाउंट नहीं बना:\n" +
+                                    task.getException()
+                                            .getMessage());
+                        }
+                    });
+        });
+
+        back.setOnClickListener(
+                v -> login());
+    }
+
+    // =========================
+    // FORGOT PASSWORD
+    // =========================
+
+    void forgotPassword() {
+
+        screen("Password Reset");
+
+        EditText resetEmail =
+                new EditText(this);
+
+        resetEmail.setHint(
+                "अपना Email डालें");
+
+        resetEmail.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+
+        body.addView(resetEmail);
+
+        Button send =
+                button("📩 Reset Email भेजें");
+
         body.addView(send);
 
-        otp = new EditText(this);
-        otp.setHint("OTP डालें");
-        otp.setInputType(2);
-        body.addView(otp);
+        Button back =
+                button("⬅️ वापस लॉगिन");
 
-        Button verify =
-                button("OTP सत्यापित करें");
-
-        body.addView(verify);
+        body.addView(back);
 
         status = text("", 16);
         body.addView(status);
 
         send.setOnClickListener(v -> {
 
-            String number =
-                    phone.getText()
-                         .toString()
-                         .trim();
+            String e =
+                    resetEmail.getText()
+                            .toString()
+                            .trim();
 
-            if (number.length() != 10) {
+            if (e.isEmpty()) {
+
                 status.setText(
-                        "सही मोबाइल नंबर डालें");
+                        "Email डालें");
                 return;
             }
 
-            PhoneAuthOptions options =
-                    PhoneAuthOptions
-                    .newBuilder(auth)
-                    .setPhoneNumber("+91" + number)
-                    .setTimeout(
-                            60L,
-                            java.util.concurrent.TimeUnit.SECONDS)
-                    .setActivity(this)
-                    .setCallbacks(
-                            new PhoneAuthProvider
-                            .OnVerificationStateChangedCallbacks() {
+            auth.sendPasswordResetEmail(e)
+                    .addOnCompleteListener(task -> {
 
-                        @Override
-                        public void onVerificationCompleted(
-                                PhoneAuthCredential credential) {
-
-                            auth.signInWithCredential(
-                                    credential)
-                                .addOnCompleteListener(task -> {
-
-                                    if (task.isSuccessful()) {
-                                        home();
-                                    }
-                                });
-                        }
-
-                        @Override
-                        public void onVerificationFailed(
-                                FirebaseException e) {
+                        if (task.isSuccessful()) {
 
                             status.setText(
-                                    "OTP नहीं भेजा गया:\n" +
-                                    e.getMessage());
-                        }
+                                    "✅ Password Reset लिंक आपके Email पर भेज दिया गया है।");
 
-                        @Override
-                        public void onCodeSent(
-                                String id,
-                                PhoneAuthProvider
-                                .ForceResendingToken token) {
-
-                            verificationId = id;
+                        } else {
 
                             status.setText(
-                                    "OTP भेज दिया गया है।");
+                                    "Reset Email नहीं भेजा गया:\n" +
+                                    task.getException()
+                                            .getMessage());
                         }
-                    })
-                    .build();
-
-            PhoneAuthProvider
-                    .verifyPhoneNumber(options);
+                    });
         });
 
-        verify.setOnClickListener(v -> {
-
-            if (verificationId == null) {
-                status.setText(
-                        "पहले OTP भेजें");
-                return;
-            }
-
-            String code =
-                    otp.getText()
-                       .toString()
-                       .trim();
-
-            PhoneAuthCredential credential =
-                    PhoneAuthProvider
-                    .getCredential(
-                            verificationId,
-                            code);
-
-            auth.signInWithCredential(
-                    credential)
-                .addOnCompleteListener(task -> {
-
-                    if (task.isSuccessful()) {
-                        home();
-                    } else {
-                        status.setText(
-                                "OTP गलत है");
-                    }
-                });
-        });
+        back.setOnClickListener(
+                v -> login());
     }
+
+    // =========================
+    // FORGOT EMAIL
+    // =========================
+
+    void forgotEmail() {
+
+        screen("Email सहायता");
+
+        body.addView(
+                text(
+                        "यदि आपको अपना Login Email याद नहीं है,\n\n" +
+                        "तो उस Email के Inbox में Firebase से आया " +
+                        "Account/Password संबंधी संदेश देखें।\n\n" +
+                        "सुरक्षा कारणों से ऐप किसी User का Email " +
+                        "बिना पहचान सत्यापन के नहीं दिखाएगा।",
+                        18));
+
+        Button back =
+                button("⬅️ वापस लॉगिन");
+
+        body.addView(back);
+
+        back.setOnClickListener(
+                v -> login());
+    }
+
+    // =========================
+    // HOME
+    // =========================
 
     void home() {
 
@@ -225,7 +367,7 @@ public class MainActivity extends Activity {
                 button("📋 मेरी शिकायतें");
 
         Button logout =
-                button("लॉगआउट");
+                button("🚪 लॉगआउट");
 
         body.addView(complaint);
         body.addView(track);
@@ -242,10 +384,15 @@ public class MainActivity extends Activity {
                 v -> mine());
 
         logout.setOnClickListener(v -> {
+
             auth.signOut();
             login();
         });
     }
+
+    // =========================
+    // COMPLAINT
+    // =========================
 
     void complaint() {
 
@@ -302,8 +449,8 @@ public class MainActivity extends Activity {
 
             String n =
                     name.getText()
-                        .toString()
-                        .trim();
+                            .toString()
+                            .trim();
 
             String d =
                     details.getText()
@@ -320,13 +467,22 @@ public class MainActivity extends Activity {
                             .toString();
 
             if (n.isEmpty() ||
-                d.isEmpty() ||
-                l.isEmpty() ||
-                c.startsWith("श्रेणी")) {
+                    d.isEmpty() ||
+                    l.isEmpty() ||
+                    c.startsWith("श्रेणी")) {
 
                 status.setText(
                         "सभी जरूरी जानकारी भरें");
+                return;
+            }
 
+            FirebaseUser user =
+                    auth.getCurrentUser();
+
+            if (user == null) {
+
+                status.setText(
+                        "पहले लॉगिन करें");
                 return;
             }
 
@@ -338,32 +494,33 @@ public class MainActivity extends Activity {
             data.put("details", d);
             data.put("location", l);
             data.put("status", "प्राप्त");
-            data.put("userId", auth.getUid());
-            data.put(
-                    "phone",
-                    auth.getCurrentUser()
-                        .getPhoneNumber());
+            data.put("userId", user.getUid());
+            data.put("email", user.getEmail());
             data.put(
                     "createdAt",
                     FieldValue.serverTimestamp());
 
             db.collection("complaints")
-              .add(data)
-              .addOnSuccessListener(document -> {
+                    .add(data)
+                    .addOnSuccessListener(document -> {
 
-                  status.setText(
-                          "शिकायत दर्ज हो गई।\n\n" +
-                          "Complaint ID:\n" +
-                          document.getId());
-              })
-              .addOnFailureListener(e -> {
+                        status.setText(
+                                "✅ शिकायत दर्ज हो गई।\n\n" +
+                                "Complaint ID:\n" +
+                                document.getId());
+                    })
+                    .addOnFailureListener(e -> {
 
-                  status.setText(
-                          "त्रुटि:\n" +
-                          e.getMessage());
-              });
+                        status.setText(
+                                "त्रुटि:\n" +
+                                e.getMessage());
+                    });
         });
     }
+
+    // =========================
+    // TRACK
+    // =========================
 
     void track() {
 
@@ -376,7 +533,7 @@ public class MainActivity extends Activity {
         body.addView(id);
 
         Button search =
-                button("स्थिति देखें");
+                button("🔎 स्थिति देखें");
 
         body.addView(search);
 
@@ -387,47 +544,52 @@ public class MainActivity extends Activity {
 
             String complaintId =
                     id.getText()
-                      .toString()
-                      .trim();
+                            .toString()
+                            .trim();
 
             if (complaintId.isEmpty()) {
+
                 status.setText(
                         "Complaint ID डालें");
                 return;
             }
 
             db.collection("complaints")
-              .document(complaintId)
-              .get()
-              .addOnSuccessListener(document -> {
+                    .document(complaintId)
+                    .get()
+                    .addOnSuccessListener(document -> {
 
-                  if (document.exists()) {
+                        if (document.exists()) {
 
-                      status.setText(
-                              "स्थिति: " +
-                              document.getString(
-                                      "status") +
-                              "\n\nश्रेणी: " +
-                              document.getString(
-                                      "category") +
-                              "\n\nसमस्या: " +
-                              document.getString(
-                                      "details"));
+                            status.setText(
+                                    "स्थिति: " +
+                                    document.getString(
+                                            "status") +
+                                    "\n\nश्रेणी: " +
+                                    document.getString(
+                                            "category") +
+                                    "\n\nसमस्या: " +
+                                    document.getString(
+                                            "details"));
 
-                  } else {
+                        } else {
 
-                      status.setText(
-                              "शिकायत नहीं मिली");
-                  }
-              })
-              .addOnFailureListener(e -> {
+                            status.setText(
+                                    "शिकायत नहीं मिली");
+                        }
+                    })
+                    .addOnFailureListener(e -> {
 
-                  status.setText(
-                          "डेटा प्राप्त नहीं हुआ:\n" +
-                          e.getMessage());
-              });
+                        status.setText(
+                                "डेटा प्राप्त नहीं हुआ:\n" +
+                                e.getMessage());
+                    });
         });
     }
+
+    // =========================
+    // MY COMPLAINTS
+    // =========================
 
     void mine() {
 
@@ -438,47 +600,57 @@ public class MainActivity extends Activity {
 
         body.addView(status);
 
+        FirebaseUser user =
+                auth.getCurrentUser();
+
+        if (user == null) {
+
+            status.setText(
+                    "पहले लॉगिन करें");
+            return;
+        }
+
         db.collection("complaints")
-          .whereEqualTo(
-                  "userId",
-                  auth.getUid())
-          .get()
-          .addOnSuccessListener(result -> {
+                .whereEqualTo(
+                        "userId",
+                        user.getUid())
+                .get()
+                .addOnSuccessListener(result -> {
 
-              body.removeView(status);
+                    body.removeView(status);
 
-              if (result.isEmpty()) {
+                    if (result.isEmpty()) {
 
-                  body.addView(
-                          text(
-                                  "अभी कोई शिकायत नहीं है।",
-                                  18));
+                        body.addView(
+                                text(
+                                        "अभी कोई शिकायत नहीं है।",
+                                        18));
 
-                  return;
-              }
+                        return;
+                    }
 
-              for (DocumentSnapshot d :
-                      result) {
+                    for (DocumentSnapshot d :
+                            result) {
 
-                  String info =
-                          "Complaint ID:\n" +
-                          d.getId() +
-                          "\n\nश्रेणी: " +
-                          d.getString(
-                                  "category") +
-                          "\nस्थिति: " +
-                          d.getString(
-                                  "status");
+                        String info =
+                                "Complaint ID:\n" +
+                                d.getId() +
+                                "\n\nश्रेणी: " +
+                                d.getString(
+                                        "category") +
+                                "\nस्थिति: " +
+                                d.getString(
+                                        "status");
 
-                  body.addView(
-                          text(info, 17));
-              }
-          })
-          .addOnFailureListener(e -> {
+                        body.addView(
+                                text(info, 17));
+                    }
+                })
+                .addOnFailureListener(e -> {
 
-              status.setText(
-                      "डेटा लोड नहीं हुआ:\n" +
-                      e.getMessage());
-                        });
+                    status.setText(
+                            "डेटा लोड नहीं हुआ:\n" +
+                            e.getMessage());
+                });
     }
-}
+            }
