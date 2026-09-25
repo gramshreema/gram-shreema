@@ -543,57 +543,14 @@ goHome.setOnClickListener(
     // =========================
     // TRACK
     // =========================
-void track() {
-
-    screen("शिकायत की स्थिति");
-
-    EditText id = new EditText(this);
-    id.setHint("Complaint ID");
-    body.addView(id);
-
-    Button search =
-            button("🔎 स्थिति देखें");
-    body.addView(search);
-
-    Button homeButton =
-            button("🏠 होम पर जाएँ");
-    body.addView(homeButton);
-
-    status = text("", 16);
-    body.addView(status);
-
-    search.setOnClickListener(v -> {
-
-        String complaintId =
-                id.getText()
-                        .toString()
-                        .trim();
-
-        if (complaintId.isEmpty()) {
-
-            status.setText(
-                    "Complaint ID डालें");
-            return;
-        }
-
-        trackById(complaintId);
-    });
-
-    homeButton.setOnClickListener(
-            v -> home());
-}
-
-
-// =========================
-// TRACK BY ID
-// =========================
 
 void trackById(String complaintId) {
 
     screen("शिकायत की स्थिति");
 
-    status =
-            text("शिकायत खोजी जा रही है...", 16);
+    status = text(
+            "शिकायत खोजी जा रही है...",
+            16);
 
     body.addView(status);
 
@@ -605,35 +562,55 @@ void trackById(String complaintId) {
     homeButton.setOnClickListener(
             v -> home());
 
+    FirebaseUser user =
+            auth.getCurrentUser();
+
+    if (user == null) {
+
+        status.setText(
+                "पहले Login करें");
+        return;
+    }
+
     db.collection("complaints")
             .whereEqualTo(
-                    com.google.firebase.firestore.FieldPath.documentId(),
-                    complaintId)
-            .limit(1)
+                    "userId",
+                    user.getUid())
             .get()
             .addOnSuccessListener(result -> {
 
-                if (!result.isEmpty()) {
+                DocumentSnapshot found = null;
 
-                    DocumentSnapshot document =
-                            result.getDocuments().get(0);
+                for (DocumentSnapshot d :
+                        result.getDocuments()) {
+
+                    if (d.getId().equals(
+                            complaintId)) {
+
+                        found = d;
+                        break;
+                    }
+                }
+
+                if (found != null) {
 
                     status.setText(
                             "Complaint ID:\n" +
-                            document.getId() +
+                            found.getId() +
                             "\n\nस्थिति: " +
-                            document.getString("status") +
+                            found.getString("status") +
                             "\n\nश्रेणी: " +
-                            document.getString("category") +
+                            found.getString("category") +
                             "\n\nसमस्या: " +
-                            document.getString("details") +
+                            found.getString("details") +
                             "\n\nस्थान: " +
-                            document.getString("location"));
+                            found.getString("location"));
 
                 } else {
 
                     status.setText(
-                            "शिकायत नहीं मिली");
+                            "इस Complaint ID की " +
+                            "शिकायत आपकी शिकायतों में नहीं मिली।");
                 }
             })
             .addOnFailureListener(e -> {
@@ -643,95 +620,6 @@ void trackById(String complaintId) {
                         e.getMessage());
             });
 }
-
-    // =========================
-    // MY COMPLAINTS
-    // =========================
-
-    void mine() {
-
-        screen("मेरी शिकायतें");
-
-        Button home =
-                button("🏠 होम पर जाएँ");
-
-        body.addView(home);
-
-        home.setOnClickListener(
-                v -> home());
-
-        status =
-                text("लोड हो रहा है...", 16);
-
-        body.addView(status);
-
-        FirebaseUser user =
-                auth.getCurrentUser();
-
-        if (user == null) {
-
-            status.setText(
-                    "पहले लॉगिन करें");
-            return;
-        }
-
-        db.collection("complaints")
-                .whereEqualTo(
-                        "userId",
-                        user.getUid())
-                .get()
-                .addOnSuccessListener(result -> {
-
-                    body.removeView(status);
-
-                    if (result.isEmpty()) {
-
-                        body.addView(
-                                text(
-                                        "अभी कोई शिकायत नहीं है।",
-                                        18));
-
-                        return;
-                    }
-
-                    for (DocumentSnapshot d :
-                            result) {
-
-                        String info =
-                                "Complaint ID:\n" +
-                                d.getId() +
-                                "\n\nश्रेणी: " +
-                                d.getString(
-                                        "category") +
-                                "\nस्थिति: " +
-                                d.getString(
-                                        "status") +
-                                "\n\n";
-
-                        body.addView(
-                                text(info, 17));
-
-                        Button view =
-                                button(
-                                        "🔎 स्थिति देखें");
-
-                        body.addView(view);
-
-                        String complaintId =
-                                d.getId();
-
-                        view.setOnClickListener(
-                                v -> trackById(
-                                        complaintId));
-                    }
-                })
-                .addOnFailureListener(e -> {
-
-                    status.setText(
-                            "डेटा लोड नहीं हुआ:\n" +
-                            e.getMessage());
-                });
-        }
 
     @Override
     public void onBackPressed() {
