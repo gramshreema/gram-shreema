@@ -733,5 +733,10 @@ goHome.setOnClickListener(
                             "डेटा लोड नहीं हुआ:\n" +
                             e.getMessage());
                 });
+        }
+
+    @Override
+    public void onBackPressed() {
+        home();
     }
-                                           }
+}
