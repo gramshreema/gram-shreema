@@ -111,26 +111,26 @@ public class MainActivity extends Activity {
                 InputType.TYPE_TEXT_VARIATION_PASSWORD);
         body.addView(password);
 
-        Button login =
+        Button loginButton =
                 button("🔐 लॉगिन करें");
-        body.addView(login);
+        body.addView(loginButton);
 
-        Button register =
+        Button registerButton =
                 button("📝 नया अकाउंट बनाएँ");
-        body.addView(register);
+        body.addView(registerButton);
 
-        Button forgotPassword =
+        Button forgotPasswordButton =
                 button("🔑 Password भूल गए?");
-        body.addView(forgotPassword);
+        body.addView(forgotPasswordButton);
 
-        Button forgotEmail =
+        Button forgotEmailButton =
                 button("📧 Email भूल गए?");
-        body.addView(forgotEmail);
+        body.addView(forgotEmailButton);
 
         status = text("", 16);
         body.addView(status);
 
-        login.setOnClickListener(v -> {
+        loginButton.setOnClickListener(v -> {
 
             String e =
                     email.getText()
@@ -163,13 +163,13 @@ public class MainActivity extends Activity {
                     });
         });
 
-        register.setOnClickListener(
+        registerButton.setOnClickListener(
                 v -> register());
 
-        forgotPassword.setOnClickListener(
+        forgotPasswordButton.setOnClickListener(
                 v -> forgotPassword());
 
-        forgotEmail.setOnClickListener(
+        forgotEmailButton.setOnClickListener(
                 v -> forgotEmail());
     }
 
@@ -359,33 +359,33 @@ public class MainActivity extends Activity {
                         "आपकी समस्या, हमारी जिम्मेदारी",
                         20));
 
-        Button complaint =
+        Button complaintButton =
                 button("📝 शिकायत दर्ज करें");
 
-        Button track =
+        Button trackButton =
                 button("🔎 शिकायत की स्थिति");
 
-        Button mine =
+        Button mineButton =
                 button("📋 मेरी शिकायतें");
 
-        Button logout =
+        Button logoutButton =
                 button("🚪 लॉगआउट");
 
-        body.addView(complaint);
-        body.addView(track);
-        body.addView(mine);
-        body.addView(logout);
+        body.addView(complaintButton);
+        body.addView(trackButton);
+        body.addView(mineButton);
+        body.addView(logoutButton);
 
-        complaint.setOnClickListener(
+        complaintButton.setOnClickListener(
                 v -> complaint());
 
-        track.setOnClickListener(
+        trackButton.setOnClickListener(
                 v -> track());
 
-        mine.setOnClickListener(
+        mineButton.setOnClickListener(
                 v -> mine());
 
-        logout.setOnClickListener(v -> {
+        logoutButton.setOnClickListener(v -> {
 
             auth.signOut();
             login();
@@ -399,6 +399,14 @@ public class MainActivity extends Activity {
     void complaint() {
 
         screen("शिकायत दर्ज करें");
+
+        Button homeButton =
+                button("🏠 होम पर जाएँ");
+
+        body.addView(homeButton);
+
+        homeButton.setOnClickListener(
+                v -> home());
 
         name = new EditText(this);
         name.setHint("नाम");
@@ -526,10 +534,13 @@ public class MainActivity extends Activity {
                         body.addView(goHome);
 
                         viewStatus.setOnClickListener(
-        click -> trackById(lastComplaintId));
+                                click ->
+                                        trackById(
+                                                lastComplaintId));
 
-goHome.setOnClickListener(
-        click -> home());
+                        goHome.setOnClickListener(
+                                click ->
+                                        home());
                     })
                     .addOnFailureListener(e -> {
 
@@ -543,122 +554,266 @@ goHome.setOnClickListener(
     // =========================
     // TRACK
     // =========================
-void track() {
 
-    screen("शिकायत की स्थिति");
+    void track() {
 
-    EditText id = new EditText(this);
-    id.setHint("Complaint ID");
-    body.addView(id);
+        screen("शिकायत की स्थिति");
 
-    Button search =
-            button("🔎 स्थिति देखें");
-    body.addView(search);
+        EditText id =
+                new EditText(this);
 
-    Button homeButton =
-            button("🏠 होम पर जाएँ");
-    body.addView(homeButton);
+        id.setHint("Complaint ID");
+        body.addView(id);
 
-    status = text("", 16);
-    body.addView(status);
+        Button search =
+                button("🔎 स्थिति देखें");
 
-    search.setOnClickListener(v -> {
+        body.addView(search);
 
-        String complaintId =
-                id.getText()
-                        .toString()
-                        .trim();
+        Button homeButton =
+                button("🏠 होम पर जाएँ");
 
-        if (complaintId.isEmpty()) {
-            status.setText("Complaint ID डालें");
+        body.addView(homeButton);
+
+        status = text("", 16);
+        body.addView(status);
+
+        search.setOnClickListener(v -> {
+
+            String complaintId =
+                    id.getText()
+                            .toString()
+                            .trim();
+
+            if (complaintId.isEmpty()) {
+
+                status.setText(
+                        "Complaint ID डालें");
+                return;
+            }
+
+            trackById(complaintId);
+        });
+
+        homeButton.setOnClickListener(
+                v -> home());
+    }
+
+    // =========================
+    // TRACK BY ID
+    // =========================
+
+    void trackById(String complaintId) {
+
+        screen("शिकायत की स्थिति");
+
+        status =
+                text(
+                        "शिकायत खोजी जा रही है...",
+                        16);
+
+        body.addView(status);
+
+        Button homeButton =
+                button("🏠 होम पर जाएँ");
+
+        body.addView(homeButton);
+
+        homeButton.setOnClickListener(
+                v -> home());
+
+        // पहले सीधे Complaint ID से खोजें
+        db.collection("complaints")
+                .document(complaintId)
+                .get()
+                .addOnSuccessListener(document -> {
+
+                    if (document.exists()) {
+
+                        showComplaint(document);
+
+                    } else {
+
+                        // अगर सीधे नहीं मिली,
+                        // तो Login User की शिकायतों में खोजें
+                        FirebaseUser user =
+                                auth.getCurrentUser();
+
+                        if (user == null) {
+
+                            status.setText(
+                                    "पहले Login करें");
+                            return;
+                        }
+
+                        db.collection("complaints")
+                                .whereEqualTo(
+                                        "userId",
+                                        user.getUid())
+                                .get()
+                                .addOnSuccessListener(result -> {
+
+                                    DocumentSnapshot found =
+                                            null;
+
+                                    for (
+                                            DocumentSnapshot d :
+                                            result.getDocuments()) {
+
+                                        if (d.getId().trim()
+                                                .equals(
+                                                        complaintId.trim())) {
+
+                                            found = d;
+                                            break;
+                                        }
+                                    }
+
+                                    if (found != null) {
+
+                                        showComplaint(found);
+
+                                    } else {
+
+                                        status.setText(
+                                                "शिकायत नहीं मिली");
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+
+                                    status.setText(
+                                            "डेटा प्राप्त नहीं हुआ:\n" +
+                                            e.getMessage());
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+
+                    status.setText(
+                            "डेटा प्राप्त नहीं हुआ:\n" +
+                            e.getMessage());
+                });
+    }
+
+    // =========================
+    // SHOW COMPLAINT
+    // =========================
+
+    void showComplaint(
+            DocumentSnapshot document) {
+
+        status.setText(
+                "Complaint ID:\n" +
+                document.getId() +
+                "\n\nस्थिति: " +
+                document.getString("status") +
+                "\n\nश्रेणी: " +
+                document.getString("category") +
+                "\n\nसमस्या: " +
+                document.getString("details") +
+                "\n\nस्थान: " +
+                document.getString("location"));
+    }
+
+    // =========================
+    // MY COMPLAINTS
+    // =========================
+
+    void mine() {
+
+        screen("मेरी शिकायतें");
+
+        status =
+                text(
+                        "शिकायतें लोड हो रही हैं...",
+                        16);
+
+        body.addView(status);
+
+        Button homeButton =
+                button("🏠 होम पर जाएँ");
+
+        body.addView(homeButton);
+
+        homeButton.setOnClickListener(
+                v -> home());
+
+        FirebaseUser user =
+                auth.getCurrentUser();
+
+        if (user == null) {
+
+            status.setText(
+                    "पहले Login करें");
             return;
         }
 
-        trackById(complaintId);
-    });
+db.collection("complaints")
+                .whereEqualTo(
+                        "userId",
+                        user.getUid())
+                .get()
+                .addOnSuccessListener(result -> {
 
-    homeButton.setOnClickListener(
-            v -> home());
-}
-void trackById(String complaintId) {
+                    status.setText("");
 
-    screen("शिकायत की स्थिति");
+                    if (result.isEmpty()) {
 
-    status = text(
-            "शिकायत खोजी जा रही है...",
-            16);
+                        status.setText(
+                                "आपकी कोई शिकायत नहीं मिली");
+                        return;
+                    }
 
-    body.addView(status);
+                    for (
+                            DocumentSnapshot d :
+                            result.getDocuments()) {
 
-    Button homeButton =
-            button("🏠 होम पर जाएँ");
+                        String info =
+                                "Complaint ID:\n" +
+                                d.getId() +
+                                "\n\nश्रेणी: " +
+                                d.getString("category") +
+                                "\nस्थिति: " +
+                                d.getString("status") +
+                                "\n\n";
 
-    body.addView(homeButton);
+                        body.addView(
+                                text(info, 17));
 
-    homeButton.setOnClickListener(
-            v -> home());
+                        Button view =
+                                button(
+                                        "🔎 स्थिति देखें");
 
-    FirebaseUser user =
-            auth.getCurrentUser();
+                        body.addView(view);
 
-    if (user == null) {
+                        String complaintId =
+                                d.getId();
 
-        status.setText(
-                "पहले Login करें");
-        return;
+                        view.setOnClickListener(
+                                v ->
+                                        trackById(
+                                                complaintId));
+                    }
+                })
+                .addOnFailureListener(e -> {
+
+                    status.setText(
+                            "डेटा लोड नहीं हुआ:\n" +
+                            e.getMessage());
+                });
     }
 
-    db.collection("complaints")
-            .whereEqualTo(
-                    "userId",
-                    user.getUid())
-            .get()
-            .addOnSuccessListener(result -> {
-
-                DocumentSnapshot found = null;
-
-                for (DocumentSnapshot d :
-                        result.getDocuments()) {
-
-                    if (d.getId().equals(
-                            complaintId)) {
-
-                        found = d;
-                        break;
-                    }
-                }
-
-                if (found != null) {
-
-                    status.setText(
-                            "Complaint ID:\n" +
-                            found.getId() +
-                            "\n\nस्थिति: " +
-                            found.getString("status") +
-                            "\n\nश्रेणी: " +
-                            found.getString("category") +
-                            "\n\nसमस्या: " +
-                            found.getString("details") +
-                            "\n\nस्थान: " +
-                            found.getString("location"));
-
-                } else {
-
-                    status.setText(
-                            "इस Complaint ID की " +
-                            "शिकायत आपकी शिकायतों में नहीं मिली।");
-                }
-            })
-            .addOnFailureListener(e -> {
-
-                status.setText(
-                        "डेटा प्राप्त नहीं हुआ:\n" +
-                        e.getMessage());
-            });
-}
+    // =========================
+    // PHONE BACK BUTTON
+    // =========================
 
     @Override
     public void onBackPressed() {
-        home();
+
+        if (auth.getCurrentUser() != null) {
+            home();
+        } else {
+            login();
+        }
     }
-}
+}   
