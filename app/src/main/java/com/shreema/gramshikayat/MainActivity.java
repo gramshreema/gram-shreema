@@ -604,6 +604,7 @@ public class MainActivity extends Activity {
     // =========================
 
     void trackById(String complaintId) {
+void trackById(String complaintId) {
 
     screen("शिकायत की स्थिति");
 
@@ -619,24 +620,40 @@ public class MainActivity extends Activity {
     homeButton.setOnClickListener(
             click -> home());
 
-    String id = complaintId.trim();
+    FirebaseUser user = auth.getCurrentUser();
 
-    if (id.isEmpty()) {
-        status.setText("कृपया शिकायत ID डालें");
+    if (user == null) {
+        status.setText("पहले Login करें");
         return;
     }
 
-    db.collection("complaints")
-            .document(id)
-            .get()
-            .addOnSuccessListener(document -> {
+    String id = complaintId.trim();
 
-                if (document.exists()) {
-                    showComplaint(document);
+    db.collection("complaints")
+            .whereEqualTo("userId", user.getUid())
+            .get()
+            .addOnSuccessListener(result -> {
+
+                DocumentSnapshot found = null;
+
+                for (DocumentSnapshot d :
+                        result.getDocuments()) {
+
+                    if (d.getId().trim().equals(id)) {
+                        found = d;
+                        break;
+                    }
+                }
+
+                if (found != null) {
+
+                    showComplaint(found);
+
                 } else {
+
                     status.setText(
                             "शिकायत नहीं मिली\n\n" +
-                            "कृपया Complaint ID सही डालें:\n" +
+                            "कृपया Complaint ID सही डालें:\n\n" +
                             id);
                 }
 
@@ -647,7 +664,7 @@ public class MainActivity extends Activity {
                         "डेटा प्राप्त नहीं हुआ:\n" +
                         e.getMessage());
             });
-    }
+            }
 
     // =========================
     // SHOW COMPLAINT
