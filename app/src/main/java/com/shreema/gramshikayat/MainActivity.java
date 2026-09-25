@@ -526,10 +526,10 @@ public class MainActivity extends Activity {
                         body.addView(goHome);
 
                         viewStatus.setOnClickListener(
-                                v -> trackById(lastComplaintId));
+        click -> trackById(lastComplaintId));
 
-                        goHome.setOnClickListener(
-                                v -> home());
+goHome.setOnClickListener(
+        click -> home());
                     })
                     .addOnFailureListener(e -> {
 
