@@ -543,7 +543,43 @@ goHome.setOnClickListener(
     // =========================
     // TRACK
     // =========================
+void track() {
 
+    screen("शिकायत की स्थिति");
+
+    EditText id = new EditText(this);
+    id.setHint("Complaint ID");
+    body.addView(id);
+
+    Button search =
+            button("🔎 स्थिति देखें");
+    body.addView(search);
+
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
+    body.addView(homeButton);
+
+    status = text("", 16);
+    body.addView(status);
+
+    search.setOnClickListener(v -> {
+
+        String complaintId =
+                id.getText()
+                        .toString()
+                        .trim();
+
+        if (complaintId.isEmpty()) {
+            status.setText("Complaint ID डालें");
+            return;
+        }
+
+        trackById(complaintId);
+    });
+
+    homeButton.setOnClickListener(
+            v -> home());
+}
 void trackById(String complaintId) {
 
     screen("शिकायत की स्थिति");
