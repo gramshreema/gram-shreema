@@ -396,160 +396,184 @@ public class MainActivity extends Activity {
     // COMPLAINT
     // =========================
 
-    void complaint() {
+   void complaint() {
 
-        screen("शिकायत दर्ज करें");
+    screen("शिकायत दर्ज करें");
 
-        Button homeButton =
-                button("🏠 होम पर जाएँ");
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
 
-        body.addView(homeButton);
+    body.addView(homeButton);
 
-        homeButton.setOnClickListener(
-                v -> home());
+    homeButton.setOnClickListener(
+            v -> home());
 
-        name = new EditText(this);
-        name.setHint("नाम");
-        body.addView(name);
+    name = new EditText(this);
+    name.setHint("नाम");
+    body.addView(name);
 
-        category = new Spinner(this);
+    EditText phone =
+            new EditText(this);
 
-        String[] categories = {
-                "श्रेणी चुनें",
-                "पानी",
-                "सड़क",
-                "बिजली / स्ट्रीट लाइट",
-                "सफाई",
-                "नाली / जल निकासी",
-                "पंचायत संबंधी",
-                "कृषि",
-                "सरकारी योजना",
-                "अन्य"
-        };
+    phone.setHint("📱 मोबाइल नंबर");
+    phone.setInputType(
+            InputType.TYPE_CLASS_PHONE);
 
-        category.setAdapter(
-                new ArrayAdapter<String>(
-                        this,
-                        android.R.layout
-                                .simple_spinner_dropdown_item,
-                        categories));
+    body.addView(phone);
 
-        body.addView(category);
+    category = new Spinner(this);
 
-        details = new EditText(this);
-        details.setHint(
-                "समस्या का विस्तृत विवरण");
-        details.setMinLines(5);
-        body.addView(details);
+    String[] categories = {
+            "श्रेणी चुनें",
+            "पानी",
+            "सड़क",
+            "बिजली / स्ट्रीट लाइट",
+            "सफाई",
+            "नाली / जल निकासी",
+            "पंचायत संबंधी",
+            "कृषि",
+            "सरकारी योजना",
+            "अन्य"
+    };
 
-        location = new EditText(this);
-        location.setHint(
-                "समस्या का स्थान / वार्ड");
-        body.addView(location);
+    category.setAdapter(
+            new ArrayAdapter<String>(
+                    this,
+                    android.R.layout
+                            .simple_spinner_dropdown_item,
+                    categories));
 
-        Button submit =
-                button("✈️ शिकायत सबमिट करें");
+    body.addView(category);
 
-        body.addView(submit);
+    details = new EditText(this);
+    details.setHint(
+            "समस्या का विस्तृत विवरण");
+    details.setMinLines(5);
+    body.addView(details);
 
-        status = text("", 16);
-        body.addView(status);
+    location = new EditText(this);
+    location.setHint(
+            "समस्या का स्थान / वार्ड");
+    body.addView(location);
 
-        submit.setOnClickListener(v -> {
+    Button submit =
+            button("✈️ शिकायत सबमिट करें");
 
-            String n =
-                    name.getText()
-                            .toString()
-                            .trim();
+    body.addView(submit);
 
-            String d =
-                    details.getText()
-                            .toString()
-                            .trim();
+    status = text("", 16);
+    body.addView(status);
 
-            String l =
-                    location.getText()
-                            .toString()
-                            .trim();
+    submit.setOnClickListener(v -> {
 
-            String c =
-                    category.getSelectedItem()
-                            .toString();
+        String n =
+                name.getText()
+                        .toString()
+                        .trim();
 
-            if (n.isEmpty() ||
-                    d.isEmpty() ||
-                    l.isEmpty() ||
-                    c.startsWith("श्रेणी")) {
+        String p =
+                phone.getText()
+                        .toString()
+                        .trim();
 
-                status.setText(
-                        "सभी जरूरी जानकारी भरें");
-                return;
-            }
+        String d =
+                details.getText()
+                        .toString()
+                        .trim();
 
-            FirebaseUser user =
-                    auth.getCurrentUser();
+        String l =
+                location.getText()
+                        .toString()
+                        .trim();
 
-            if (user == null) {
+        String c =
+                category.getSelectedItem()
+                        .toString();
 
-                status.setText(
-                        "पहले लॉगिन करें");
-                return;
-            }
+        if (n.isEmpty() ||
+                p.isEmpty() ||
+                d.isEmpty() ||
+                l.isEmpty() ||
+                c.startsWith("श्रेणी")) {
 
-            Map<String, Object> data =
-                    new HashMap<>();
+            status.setText(
+                    "सभी जरूरी जानकारी भरें");
+            return;
+        }
 
-            data.put("name", n);
-            data.put("category", c);
-            data.put("details", d);
-            data.put("location", l);
-            data.put("status", "प्राप्त");
-            data.put("userId", user.getUid());
-            data.put("email", user.getEmail());
-            data.put(
-                    "createdAt",
-                    FieldValue.serverTimestamp());
+        if (p.length() < 10) {
 
-            db.collection("complaints")
-                    .add(data)
-                    .addOnSuccessListener(document -> {
+            status.setText(
+                    "सही 10 अंकों का मोबाइल नंबर डालें");
+            return;
+        }
 
-                        lastComplaintId =
-                                document.getId();
+        FirebaseUser user =
+                auth.getCurrentUser();
 
-                        status.setText(
-                                "✅ शिकायत दर्ज हो गई।\n\n" +
-                                "Complaint ID:\n" +
-                                lastComplaintId);
+        if (user == null) {
 
-                        Button viewStatus =
-                                button(
-                                        "🔎 इसी शिकायत की स्थिति देखें");
+            status.setText(
+                    "पहले लॉगिन करें");
+            return;
+        }
 
-                        Button goHome =
-                                button(
-                                        "🏠 होम पर जाएँ");
+        Map<String, Object> data =
+                new HashMap<>();
 
-                        body.addView(viewStatus);
-                        body.addView(goHome);
+        data.put("name", n);
+        data.put("phone", p);
+        data.put("category", c);
+        data.put("details", d);
+        data.put("location", l);
+        data.put("status", "प्राप्त");
+        data.put("userId", user.getUid());
+        data.put("email", user.getEmail());
 
-                        viewStatus.setOnClickListener(
-                                click ->
-                                        trackById(
-                                                lastComplaintId));
+        data.put(
+                "createdAt",
+                FieldValue.serverTimestamp());
 
-                        goHome.setOnClickListener(
-                                click ->
-                                        home());
-                    })
-                    .addOnFailureListener(e -> {
+        db.collection("complaints")
+                .add(data)
+                .addOnSuccessListener(document -> {
 
-                        status.setText(
-                                "त्रुटि:\n" +
-                                e.getMessage());
-                    });
-        });
-    }
+                    lastComplaintId =
+                            document.getId();
+
+                    status.setText(
+                            "✅ शिकायत दर्ज हो गई।\n\n" +
+                            "Complaint ID:\n" +
+                            lastComplaintId);
+
+                    Button viewStatus =
+                            button(
+                                    "🔎 इसी शिकायत की स्थिति देखें");
+
+                    Button goHome =
+                            button(
+                                    "🏠 होम पर जाएँ");
+
+                    body.addView(viewStatus);
+                    body.addView(goHome);
+
+                    viewStatus.setOnClickListener(
+                            click ->
+                                    trackById(
+                                            lastComplaintId));
+
+                    goHome.setOnClickListener(
+                            click ->
+                                    home());
+                })
+                .addOnFailureListener(e -> {
+
+                    status.setText(
+                            "त्रुटि:\n" +
+                            e.getMessage());
+                });
+    });
+   }               
 
     // =========================
     // TRACK
