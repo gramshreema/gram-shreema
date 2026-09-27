@@ -587,6 +587,7 @@ public class MainActivity extends Activity {
                 new EditText(this);
 
         id.setHint("Complaint ID");
+        id.setInputType(InputType.TYPE_CLASS_TEXT);
         body.addView(id);
 
         Button search =
