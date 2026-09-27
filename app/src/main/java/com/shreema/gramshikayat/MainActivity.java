@@ -669,7 +669,7 @@ void trackById(String complaintId) {
                     String documentId =
                             d.getId().trim();
 
-                    if (documentId.equals(searchId)) {
+                    if (documentId.equalsIgnoreCase(searchId)) {
                         found = d;
                         break;
                     }
