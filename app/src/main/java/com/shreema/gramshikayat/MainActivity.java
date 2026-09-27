@@ -367,6 +367,8 @@ public class MainActivity extends Activity {
 
         Button mineButton =
                 button("📋 मेरी शिकायतें");
+        Button adminButton =
+        button("🛠️ Admin Panel");
 
         Button logoutButton =
                 button("🚪 लॉगआउट");
@@ -374,6 +376,7 @@ public class MainActivity extends Activity {
         body.addView(complaintButton);
         body.addView(trackButton);
         body.addView(mineButton);
+        body.addView(adminButton);
         body.addView(logoutButton);
 
         complaintButton.setOnClickListener(
@@ -384,6 +387,8 @@ public class MainActivity extends Activity {
 
         mineButton.setOnClickListener(
                 v -> mine());
+        adminButton.setOnClickListener(
+        v -> adminPanel());
 
         logoutButton.setOnClickListener(v -> {
 
@@ -802,6 +807,178 @@ db.collection("complaints")
                             "डेटा लोड नहीं हुआ:\n" +
                             e.getMessage());
                 });
+    }
+    void adminPanel() {
+
+    screen("🛠️ Admin Panel");
+
+    status = text(
+            "शिकायतें लोड हो रही हैं...",
+            16);
+
+    body.addView(status);
+
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
+
+    body.addView(homeButton);
+
+    homeButton.setOnClickListener(
+            v -> home());
+
+    FirebaseUser user =
+            auth.getCurrentUser();
+
+    if (user == null) {
+
+        status.setText(
+                "पहले Login करें");
+        return;
+    }
+
+    db.collection("admins")
+            .document(user.getUid())
+            .get()
+            .addOnSuccessListener(adminDoc -> {
+
+                if (!adminDoc.exists()) {
+
+                    status.setText(
+                            "❌ आपको Admin की अनुमति नहीं है");
+                    return;
+                }
+
+                db.collection("complaints")
+                        .get()
+                        .addOnSuccessListener(result -> {
+
+                            status.setText("");
+
+                            if (result.isEmpty()) {
+
+                                status.setText(
+                                        "कोई शिकायत नहीं मिली");
+                                return;
+                            }
+
+                            for (
+                                    DocumentSnapshot d :
+                                    result.getDocuments()) {
+
+                                String info =
+                                        "Complaint ID:\n" +
+                                        d.getId() +
+                                        "\n\nनाम: " +
+                                        d.getString("name") +
+                                        "\nमोबाइल: " +
+                                        d.getString("phone") +
+                                        "\nश्रेणी: " +
+                                        d.getString("category") +
+                                        "\nस्थिति: " +
+                                        d.getString("status") +
+                                        "\n\nसमस्या:\n" +
+                                        d.getString("details") +
+                                        "\n\nस्थान: " +
+                                        d.getString("location") +
+                                        "\n\n";
+
+                                body.addView(
+                                        text(info, 16));
+
+                                Button statusButton =
+                                        button(
+                                                "✏️ स्थिति बदलें");
+
+                                body.addView(
+                                        statusButton);
+
+                                String complaintId =
+                                        d.getId();
+
+                                statusButton.setOnClickListener(
+                                        v ->
+                                                changeStatus(
+                                                        complaintId));
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+
+                            status.setText(
+                                    "शिकायतें लोड नहीं हुईं:\n" +
+                                    e.getMessage());
+                        });
+            })
+            .addOnFailureListener(e -> {
+
+                status.setText(
+                        "Admin जाँच में समस्या:\n" +
+                        e.getMessage());
+            });
+    }
+    void changeStatus(String complaintId) {
+
+    screen("शिकायत की स्थिति बदलें");
+
+    status = text(
+            "स्थिति लोड हो रही है...",
+            16);
+
+    body.addView(status);
+
+    Spinner statusSpinner =
+            new Spinner(this);
+
+    String[] statuses = {
+            "प्राप्त",
+            "कार्यवाही जारी",
+            "निस्तारित"
+    };
+
+    statusSpinner.setAdapter(
+            new ArrayAdapter<String>(
+                    this,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    statuses));
+
+    body.addView(statusSpinner);
+
+    Button save =
+            button("💾 स्थिति सेव करें");
+
+    body.addView(save);
+
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
+
+    body.addView(homeButton);
+
+    homeButton.setOnClickListener(
+            v -> home());
+
+    save.setOnClickListener(v -> {
+
+        String newStatus =
+                statusSpinner
+                        .getSelectedItem()
+                        .toString();
+
+        db.collection("complaints")
+                .document(complaintId)
+                .update("status", newStatus)
+                .addOnSuccessListener(aVoid -> {
+
+                    status.setText(
+                            "✅ स्थिति अपडेट हो गई\n\n" +
+                            "नई स्थिति: " +
+                            newStatus);
+                })
+                .addOnFailureListener(e -> {
+
+                    status.setText(
+                            "स्थिति अपडेट नहीं हुई:\n" +
+                            e.getMessage());
+                });
+    });
     }
 
     // =========================
