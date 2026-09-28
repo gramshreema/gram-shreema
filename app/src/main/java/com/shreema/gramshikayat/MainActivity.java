@@ -925,32 +925,6 @@ if (createdAt instanceof com.google.firebase.Timestamp) {
     dateTime = sdf.format(date);
 }
 
-String info =
-        "Complaint ID:\n" +
-        d.getId() +
-
-        "\n\nदर्ज करने की तारीख और समय:\n" +
-        dateTime +
-
-        "\n\nनाम: " +
-        d.getString("name") +
-
-        "\nमोबाइल: " +
-        d.getString("phone") +
-
-        "\nश्रेणी: " +
-        d.getString("category") +
-
-        "\nस्थिति: " +
-        currentStatus +
-
-        "\n\nसमस्या:\n" +
-        d.getString("details") +
-
-        "\n\nस्थान: " +
-        d.getString("location") +
-
-        "\n\n";
                                 String info =
                                         "Complaint ID:\n" +
                                         d.getId() +
