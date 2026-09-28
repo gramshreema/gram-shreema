@@ -866,16 +866,21 @@ db.collection("complaints")
 
                             status.setText("");
 
-                            if (result.isEmpty()) {
-
-                                status.setText(
-                                        "कोई शिकायत नहीं मिली");
-                                return;
-                            }
+                            int activeCount = 0;
 
                             for (
                                     DocumentSnapshot d :
                                     result.getDocuments()) {
+
+                                String currentStatus =
+                                        d.getString("status");
+
+                                if ("निस्तारित".equals(
+                                        currentStatus)) {
+                                    continue;
+                                }
+
+                                activeCount++;
 
                                 String info =
                                         "Complaint ID:\n" +
@@ -887,7 +892,7 @@ db.collection("complaints")
                                         "\nश्रेणी: " +
                                         d.getString("category") +
                                         "\nस्थिति: " +
-                                        d.getString("status") +
+                                        currentStatus +
                                         "\n\nसमस्या:\n" +
                                         d.getString("details") +
                                         "\n\nस्थान: " +
@@ -912,6 +917,12 @@ db.collection("complaints")
                                                 changeStatus(
                                                         complaintId));
                             }
+
+                            if (activeCount == 0) {
+
+                                status.setText(
+                                        "✅ सभी शिकायतों का निस्तारण हो चुका है।");
+                            }
                         })
                         .addOnFailureListener(e -> {
 
@@ -926,7 +937,7 @@ db.collection("complaints")
                         "Admin जाँच में समस्या:\n" +
                         e.getMessage());
             });
-    }
+                                            }
     void changeStatus(String complaintId) {
 
     screen("शिकायत की स्थिति बदलें");
