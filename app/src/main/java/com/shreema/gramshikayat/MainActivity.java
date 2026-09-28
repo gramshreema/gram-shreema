@@ -905,6 +905,32 @@ db.collection("complaints")
                                 button("📞 कॉल करें");
 
                                 body.addView(callButton);
+                                String phoneNumber =
+        d.getString("phone");
+
+callButton.setOnClickListener(v -> {
+
+    if (phoneNumber != null &&
+            !phoneNumber.trim().isEmpty()) {
+
+        android.content.Intent intent =
+                new android.content.Intent(
+                        android.content.Intent.ACTION_DIAL);
+
+        intent.setData(
+                android.net.Uri.parse(
+                        "tel:" + phoneNumber));
+
+        startActivity(intent);
+
+    } else {
+
+        Toast.makeText(
+                this,
+                "मोबाइल नंबर उपलब्ध नहीं है",
+                Toast.LENGTH_SHORT).show();
+    }
+});
 
                                 Button statusButton =
                                         button(
