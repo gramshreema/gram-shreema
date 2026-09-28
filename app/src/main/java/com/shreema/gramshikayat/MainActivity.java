@@ -901,6 +901,10 @@ db.collection("complaints")
 
                                 body.addView(
                                         text(info, 16));
+                                Button callButton =
+                                button("📞 कॉल करें");
+
+                                body.addView(callButton);
 
                                 Button statusButton =
                                         button(
