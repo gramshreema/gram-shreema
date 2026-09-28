@@ -1,4 +1,4 @@
-package com.shreema.gramshikayat;
+ípackage com.shreema.gramshikayat;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -942,6 +942,16 @@ db.collection("complaints")
 
     body.addView(statusSpinner);
 
+    EditText actionDetails =
+            new EditText(this);
+
+    actionDetails.setHint(
+            "कार्यवाही / समाधान विवरण");
+
+    actionDetails.setMinLines(4);
+
+    body.addView(actionDetails);
+
     Button save =
             button("💾 स्थिति सेव करें");
 
@@ -962,15 +972,37 @@ db.collection("complaints")
                         .getSelectedItem()
                         .toString();
 
+        String details =
+                actionDetails.getText()
+                        .toString()
+                        .trim();
+
+        if (newStatus.equals("निस्तारित")
+                && details.isEmpty()) {
+
+            status.setText(
+                    "निस्तारित करने से पहले\n" +
+                    "कार्यवाही / समाधान विवरण लिखें");
+
+            return;
+        }
+
         db.collection("complaints")
                 .document(complaintId)
-                .update("status", newStatus)
+                .update(
+                        "status",
+                        newStatus,
+                        "actionDetails",
+                        details)
                 .addOnSuccessListener(aVoid -> {
 
                     status.setText(
                             "✅ स्थिति अपडेट हो गई\n\n" +
                             "नई स्थिति: " +
-                            newStatus);
+                            newStatus +
+                            "\n\n" +
+                            "कार्यवाही / समाधान:\n" +
+                            details);
                 })
                 .addOnFailureListener(e -> {
 
@@ -980,7 +1012,6 @@ db.collection("complaints")
                 });
     });
     }
-
     // =========================
     // PHONE BACK BUTTON
     // =========================
