@@ -705,8 +705,7 @@ void trackById(String complaintId) {
     // SHOW COMPLAINT
     // =========================
 
-    void showComplaint(
-        DocumentSnapshot document) {
+    void showComplaint(DocumentSnapshot document) {
 
     String actionDetails =
             document.getString("actionDetails");
@@ -718,17 +717,44 @@ void trackById(String complaintId) {
                 "अभी कोई कार्यवाही विवरण नहीं दिया गया।";
     }
 
+    // शिकायत की तारीख और समय
+    Object createdAt = document.get("createdAt");
+
+    String dateTime = "उपलब्ध नहीं";
+
+    if (createdAt instanceof com.google.firebase.Timestamp) {
+
+        java.util.Date date =
+                ((com.google.firebase.Timestamp) createdAt)
+                        .toDate();
+
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat(
+                        "dd-MM-yyyy hh:mm a",
+                        java.util.Locale.getDefault());
+
+        dateTime = sdf.format(date);
+    }
+
     status.setText(
             "Complaint ID:\n" +
             document.getId() +
+
+            "\n\nदर्ज करने की तारीख और समय:\n" +
+            dateTime +
+
             "\n\nस्थिति: " +
             document.getString("status") +
+
             "\n\nश्रेणी: " +
             document.getString("category") +
+
             "\n\nसमस्या: " +
             document.getString("details") +
+
             "\n\nस्थान: " +
             document.getString("location") +
+
             "\n\nकार्यवाही / समाधान:\n" +
             actionDetails);
     }
