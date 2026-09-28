@@ -706,19 +706,31 @@ void trackById(String complaintId) {
     // =========================
 
     void showComplaint(
-            DocumentSnapshot document) {
+        DocumentSnapshot document) {
 
-        status.setText(
-                "Complaint ID:\n" +
-                document.getId() +
-                "\n\nस्थिति: " +
-                document.getString("status") +
-                "\n\nश्रेणी: " +
-                document.getString("category") +
-                "\n\nसमस्या: " +
-                document.getString("details") +
-                "\n\nस्थान: " +
-                document.getString("location"));
+    String actionDetails =
+            document.getString("actionDetails");
+
+    if (actionDetails == null ||
+            actionDetails.trim().isEmpty()) {
+
+        actionDetails =
+                "अभी कोई कार्यवाही विवरण नहीं दिया गया।";
+    }
+
+    status.setText(
+            "Complaint ID:\n" +
+            document.getId() +
+            "\n\nस्थिति: " +
+            document.getString("status") +
+            "\n\nश्रेणी: " +
+            document.getString("category") +
+            "\n\nसमस्या: " +
+            document.getString("details") +
+            "\n\nस्थान: " +
+            document.getString("location") +
+            "\n\nकार्यवाही / समाधान:\n" +
+            actionDetails);
     }
 
     // =========================
