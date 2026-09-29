@@ -925,27 +925,55 @@ if (createdAt instanceof com.google.firebase.Timestamp) {
     dateTime = sdf.format(date);
 }
 
-                                String info =
-                                        "Complaint ID:\n" +
-                                        d.getId() +
-                                        "\n\nनाम: " +
-                                        d.getString("name") +
-                                        "\nमोबाइल: " +
-                                        d.getString("phone") +
-                                        "\nश्रेणी: " +
-                                        d.getString("category") +
-                                        "\nस्थिति: " +
-                                        currentStatus +
-                                        "\n\nसमस्या:\n" +
-                                        d.getString("details") +
-                                        "\n\nस्थान: " +
-                                        d.getString("location") +
-                                        "\n\n";
+                                Object createdAt = d.get("createdAt");
 
-                                body.addView(
-                                        text(info, 16));
-                                Button callButton =
-                                button("📞 कॉल करें");
+String dateTime = "उपलब्ध नहीं";
+
+if (createdAt instanceof com.google.firebase.Timestamp) {
+
+    java.util.Date date =
+            ((com.google.firebase.Timestamp) createdAt).toDate();
+
+    java.text.SimpleDateFormat sdf =
+            new java.text.SimpleDateFormat(
+                    "dd-MM-yyyy hh:mm a",
+                    java.util.Locale.getDefault());
+
+    dateTime = sdf.format(date);
+}
+
+String info =
+        "Complaint ID:\n" +
+        d.getId() +
+
+        "\n\nदर्ज करने की तारीख और समय:\n" +
+        dateTime +
+
+        "\n\nनाम: " +
+        d.getString("name") +
+
+        "\nमोबाइल: " +
+        d.getString("phone") +
+
+        "\nश्रेणी: " +
+        d.getString("category") +
+
+        "\nस्थिति: " +
+        currentStatus +
+
+        "\n\nसमस्या:\n" +
+        d.getString("details") +
+
+        "\n\nस्थान: " +
+        d.getString("location") +
+
+        "\n\n";
+
+body.addView(
+        text(info, 16));
+
+Button callButton =
+        button("📞 कॉल करें");
 
                                 body.addView(callButton);
                                 String phoneNumber =
