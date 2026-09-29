@@ -763,89 +763,138 @@ void trackById(String complaintId) {
     // MY COMPLAINTS
     // =========================
 
-    void mine() {
+   void mine() {
 
-        screen("मेरी शिकायतें");
+    screen("मेरी शिकायतें");
 
-        status =
-                text(
-                        "शिकायतें लोड हो रही हैं...",
-                        16);
+    status = text(
+            "शिकायतें लोड हो रही हैं...",
+            16);
 
-        body.addView(status);
+    body.addView(status);
 
-        Button homeButton =
-                button("🏠 होम पर जाएँ");
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
 
-        body.addView(homeButton);
+    body.addView(homeButton);
 
-        homeButton.setOnClickListener(
-                v -> home());
+    homeButton.setOnClickListener(
+            v -> home());
 
-        FirebaseUser user =
-                auth.getCurrentUser();
+    FirebaseUser user =
+            auth.getCurrentUser();
 
-        if (user == null) {
+    if (user == null) {
 
-            status.setText(
-                    "पहले Login करें");
-            return;
-        }
+        status.setText(
+                "पहले Login करें");
+        return;
+    }
 
-db.collection("complaints")
-                .whereEqualTo(
-                        "userId",
-                        user.getUid())
-                .get()
-                .addOnSuccessListener(result -> {
+    db.collection("complaints")
+            .whereEqualTo(
+                    "userId",
+                    user.getUid())
+            .get()
+            .addOnSuccessListener(result -> {
 
-                    status.setText("");
+                status.setText("");
 
-                    if (result.isEmpty()) {
-
-                        status.setText(
-                                "आपकी कोई शिकायत नहीं मिली");
-                        return;
-                    }
-
-                    for (
-                            DocumentSnapshot d :
-                            result.getDocuments()) {
-
-                        String info =
-                                "Complaint ID:\n" +
-                                d.getId() +
-                                "\n\nश्रेणी: " +
-                                d.getString("category") +
-                                "\nस्थिति: " +
-                                d.getString("status") +
-                                "\n\n";
-
-                        body.addView(
-                                text(info, 17));
-
-                        Button view =
-                                button(
-                                        "🔎 स्थिति देखें");
-
-                        body.addView(view);
-
-                        String complaintId =
-                                d.getId();
-
-                        view.setOnClickListener(
-                                v ->
-                                        trackById(
-                                                complaintId));
-                    }
-                })
-                .addOnFailureListener(e -> {
+                if (result.isEmpty()) {
 
                     status.setText(
-                            "डेटा लोड नहीं हुआ:\n" +
-                            e.getMessage());
-                });
-    }
+                            "आपकी कोई शिकायत नहीं मिली");
+                    return;
+                }
+
+                for (
+                        DocumentSnapshot d :
+                        result.getDocuments()) {
+
+                    // तारीख और समय
+                    Object createdAt =
+                            d.get("createdAt");
+
+                    String dateTime =
+                            "उपलब्ध नहीं";
+
+                    if (createdAt instanceof
+                            com.google.firebase.Timestamp) {
+
+                        java.util.Date date =
+                                ((com.google.firebase.Timestamp)
+                                        createdAt)
+                                        .toDate();
+
+                        java.text.SimpleDateFormat sdf =
+                                new java.text.SimpleDateFormat(
+                                        "dd-MM-yyyy hh:mm a",
+                                        java.util.Locale.getDefault());
+
+                        dateTime =
+                                sdf.format(date);
+                    }
+
+                    // कार्यवाही / समाधान
+                    String actionDetails =
+                            d.getString(
+                                    "actionDetails");
+
+                    if (actionDetails == null ||
+                            actionDetails.trim().isEmpty()) {
+
+                        actionDetails =
+                                "अभी कोई कार्यवाही विवरण नहीं दिया गया।";
+                    }
+
+                    String info =
+                            "Complaint ID:\n" +
+                            d.getId() +
+
+                            "\n\nदर्ज करने की तारीख और समय:\n" +
+                            dateTime +
+
+                            "\n\nश्रेणी: " +
+                            d.getString("category") +
+
+                            "\n\nस्थिति: " +
+                            d.getString("status") +
+
+                            "\n\nसमस्या:\n" +
+                            d.getString("details") +
+
+                            "\n\nकार्यवाही / समाधान:\n" +
+                            actionDetails +
+
+                            "\n\n";
+
+                    body.addView(
+                            text(info, 17));
+
+                    Button view =
+                            button(
+                                    "🔎 पूरी स्थिति देखें");
+
+                    body.addView(view);
+
+                    String complaintId =
+                            d.getId();
+
+                    view.setOnClickListener(
+                            v ->
+                                    trackById(
+                                            complaintId));
+                }
+            })
+            .addOnFailureListener(e -> {
+
+                status.setText(
+                        "डेटा लोड नहीं हुआ:\n" +
+                        e.getMessage());
+            });
+                        }  
+                            
+
     void adminPanel() {
 
     screen("🛠️ Admin Panel");
