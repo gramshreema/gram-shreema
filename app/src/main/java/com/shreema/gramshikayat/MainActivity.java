@@ -925,22 +925,6 @@ if (createdAt instanceof com.google.firebase.Timestamp) {
     dateTime = sdf.format(date);
 }
 
-                                Object createdAt = d.get("createdAt");
-
-String dateTime = "उपलब्ध नहीं";
-
-if (createdAt instanceof com.google.firebase.Timestamp) {
-
-    java.util.Date date =
-            ((com.google.firebase.Timestamp) createdAt).toDate();
-
-    java.text.SimpleDateFormat sdf =
-            new java.text.SimpleDateFormat(
-                    "dd-MM-yyyy hh:mm a",
-                    java.util.Locale.getDefault());
-
-    dateTime = sdf.format(date);
-}
 
 String info =
         "Complaint ID:\n" +
