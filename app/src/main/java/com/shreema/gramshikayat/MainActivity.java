@@ -807,9 +807,29 @@ void trackById(String complaintId) {
                     return;
                 }
 
-                for (
-                        DocumentSnapshot d :
-                        result.getDocuments()) {
+                java.util.List<DocumentSnapshot> complaints =
+        new java.util.ArrayList<>(
+                result.getDocuments());
+
+java.util.Collections.sort(
+        complaints,
+        (a, b) -> {
+
+            com.google.firebase.Timestamp ta =
+                    a.getTimestamp("createdAt");
+
+            com.google.firebase.Timestamp tb =
+                    b.getTimestamp("createdAt");
+
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+
+            return tb.compareTo(ta);
+        });
+
+for (DocumentSnapshot d : complaints) {
+                    
 
                     // तारीख और समय
                     Object createdAt =
