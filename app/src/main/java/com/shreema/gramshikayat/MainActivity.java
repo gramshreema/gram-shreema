@@ -913,9 +913,8 @@ for (DocumentSnapshot d : complaints) {
                         e.getMessage());
             });
                         }  
-                            
 
-    void adminPanel() {
+   void adminPanel() {
 
     screen("🛠️ Admin Panel");
 
@@ -924,6 +923,13 @@ for (DocumentSnapshot d : complaints) {
             16);
 
     body.addView(status);
+
+    // शिकायतों की गिनती दिखाने वाला TextView
+    TextView countStatus = text(
+            "📊 शिकायतों की गिनती लोड हो रही है...",
+            17);
+
+    body.addView(countStatus);
 
     Button homeButton =
             button("🏠 होम पर जाएँ");
@@ -952,40 +958,52 @@ for (DocumentSnapshot d : complaints) {
 
                     status.setText(
                             "❌ आपको Admin की अनुमति नहीं है");
+
+                    countStatus.setText("");
+
                     return;
                 }
 
                 db.collection("complaints")
-        .whereNotEqualTo("status", "निस्तारित")
-        .get()
+                        .whereNotEqualTo(
+                                "status",
+                                "निस्तारित")
+                        .get()
                         .addOnSuccessListener(result -> {
 
                             status.setText("");
 
                             int activeCount = 0;
+                            int receivedCount = 0;
+                            int inProgressCount = 0;
 
                             java.util.List<DocumentSnapshot> complaints =
-        new java.util.ArrayList<>(
-                result.getDocuments());
+                                    new java.util.ArrayList<>(
+                                            result.getDocuments());
 
-java.util.Collections.sort(
-        complaints,
-        (a, b) -> {
+                            java.util.Collections.sort(
+                                    complaints,
+                                    (a, b) -> {
 
-            com.google.firebase.Timestamp ta =
-                    a.getTimestamp("createdAt");
+                                        com.google.firebase.Timestamp ta =
+                                                a.getTimestamp("createdAt");
 
-            com.google.firebase.Timestamp tb =
-                    b.getTimestamp("createdAt");
+                                        com.google.firebase.Timestamp tb =
+                                                b.getTimestamp("createdAt");
 
-            if (ta == null && tb == null) return 0;
-            if (ta == null) return 1;
-            if (tb == null) return -1;
+                                        if (ta == null && tb == null)
+                                            return 0;
 
-            return tb.compareTo(ta);
-        });
+                                        if (ta == null)
+                                            return 1;
 
-for (DocumentSnapshot d : complaints) {
+                                        if (tb == null)
+                                            return -1;
+
+                                        return tb.compareTo(ta);
+                                    });
+
+                            for (DocumentSnapshot d : complaints) {
 
                                 String currentStatus =
                                         d.getString("status");
@@ -996,85 +1014,109 @@ for (DocumentSnapshot d : complaints) {
                                 }
 
                                 activeCount++;
-                                Object createdAt = d.get("createdAt");
 
-String dateTime = "उपलब्ध नहीं";
+                                if ("प्राप्त".equals(
+                                        currentStatus)) {
 
-if (createdAt instanceof com.google.firebase.Timestamp) {
+                                    receivedCount++;
 
-    java.util.Date date =
-            ((com.google.firebase.Timestamp) createdAt)
-                    .toDate();
+                                } else if ("कार्यवाही जारी".equals(
+                                        currentStatus)) {
 
-    java.text.SimpleDateFormat sdf =
-            new java.text.SimpleDateFormat(
-                    "dd-MM-yyyy hh:mm a",
-                    java.util.Locale.getDefault());
+                                    inProgressCount++;
+                                }
 
-    dateTime = sdf.format(date);
-}
+                                Object createdAt =
+                                        d.get("createdAt");
 
+                                String dateTime =
+                                        "उपलब्ध नहीं";
 
-String info =
-        "Complaint ID:\n" +
-        d.getId() +
+                                if (createdAt instanceof
+                                        com.google.firebase.Timestamp) {
 
-        "\n\nदर्ज करने की तारीख और समय:\n" +
-        dateTime +
+                                    java.util.Date date =
+                                            ((com.google.firebase.Timestamp)
+                                                    createdAt)
+                                                    .toDate();
 
-        "\n\nनाम: " +
-        d.getString("name") +
+                                    java.text.SimpleDateFormat sdf =
+                                            new java.text.SimpleDateFormat(
+                                                    "dd-MM-yyyy hh:mm a",
+                                                    java.util.Locale
+                                                            .getDefault());
 
-        "\nमोबाइल: " +
-        d.getString("phone") +
+                                    dateTime =
+                                            sdf.format(date);
+                                }
 
-        "\nश्रेणी: " +
-        d.getString("category") +
+                                String info =
+                                        "Complaint ID:\n" +
+                                        d.getId() +
 
-        "\nस्थिति: " +
-        currentStatus +
+                                        "\n\nदर्ज करने की तारीख और समय:\n" +
+                                        dateTime +
 
-        "\n\nसमस्या:\n" +
-        d.getString("details") +
+                                        "\n\nनाम: " +
+                                        d.getString("name") +
 
-        "\n\nस्थान: " +
-        d.getString("location") +
+                                        "\nमोबाइल: " +
+                                        d.getString("phone") +
 
-        "\n\n";
+                                        "\nश्रेणी: " +
+                                        d.getString("category") +
 
-body.addView(
-        text(info, 16));
+                                        "\nस्थिति: " +
+                                        currentStatus +
 
-Button callButton =
-        button("📞 कॉल करें");
+                                        "\n\nसमस्या:\n" +
+                                        d.getString("details") +
+
+                                        "\n\nस्थान: " +
+                                        d.getString("location") +
+
+                                        "\n\n";
+
+                                body.addView(
+                                        text(info, 16));
+
+                                Button callButton =
+                                        button("📞 कॉल करें");
 
                                 body.addView(callButton);
+
                                 String phoneNumber =
-        d.getString("phone");
+                                        d.getString("phone");
 
-callButton.setOnClickListener(v -> {
+                                callButton.setOnClickListener(
+                                        v -> {
 
-    if (phoneNumber != null &&
-            !phoneNumber.trim().isEmpty()) {
+                                            if (phoneNumber != null &&
+                                                    !phoneNumber
+                                                            .trim()
+                                                            .isEmpty()) {
 
-        android.content.Intent intent =
-                new android.content.Intent(
-                        android.content.Intent.ACTION_DIAL);
+                                                android.content.Intent intent =
+                                                        new android.content.Intent(
+                                                                android.content.Intent
+                                                                        .ACTION_DIAL);
 
-        intent.setData(
-                android.net.Uri.parse(
-                        "tel:" + phoneNumber));
+                                                intent.setData(
+                                                        android.net.Uri.parse(
+                                                                "tel:" +
+                                                                        phoneNumber));
 
-        startActivity(intent);
+                                                startActivity(intent);
 
-    } else {
+                                            } else {
 
-        Toast.makeText(
-                this,
-                "मोबाइल नंबर उपलब्ध नहीं है",
-                Toast.LENGTH_SHORT).show();
-    }
-});
+                                                Toast.makeText(
+                                                        this,
+                                                        "मोबाइल नंबर उपलब्ध नहीं है",
+                                                        Toast.LENGTH_SHORT)
+                                                        .show();
+                                            }
+                                        });
 
                                 Button statusButton =
                                         button(
@@ -1092,27 +1134,43 @@ callButton.setOnClickListener(v -> {
                                                         complaintId));
                             }
 
+                            // शिकायतों की गिनती
+                            countStatus.setText(
+                                    "📊 कुल सक्रिय शिकायतें: " +
+                                            activeCount +
+
+                                            "\n📥 प्राप्त: " +
+                                            receivedCount +
+
+                                            "\n🔄 कार्यवाही जारी: " +
+                                            inProgressCount);
+
                             if (activeCount == 0) {
 
                                 status.setText(
                                         "✅ सभी शिकायतों का निस्तारण हो चुका है।");
                             }
+
                         })
                         .addOnFailureListener(e -> {
 
                             status.setText(
                                     "शिकायतें लोड नहीं हुईं:\n" +
-                                    e.getMessage());
+                                            e.getMessage());
+
+                            countStatus.setText("");
                         });
             })
             .addOnFailureListener(e -> {
 
                 status.setText(
                         "Admin जाँच में समस्या:\n" +
-                        e.getMessage());
+                                e.getMessage());
+
+                countStatus.setText("");
             });
-                                            }
-    void changeStatus(String complaintId) {
+   } 
+  void changeStatus(String complaintId) {
 
     screen("शिकायत की स्थिति बदलें");
 
