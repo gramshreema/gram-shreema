@@ -352,50 +352,67 @@ public class MainActivity extends Activity {
 
     void home() {
 
-        screen("जन शिकायत एवं समाधान");
+    screen("ग्राम श्रीमा शिकायत ऐप");
 
-        body.addView(
-                text(
-                        "आपकी समस्या, हमारी जिम्मेदारी",
-                        20));
+    body.addView(
+            text(
+                    "🌾 ग्राम श्रीमा",
+                    26));
 
-        Button complaintButton =
-                button("📝 शिकायत दर्ज करें");
+    body.addView(
+            text(
+                    "जन शिकायत एवं समाधान",
+                    21));
 
-        Button trackButton =
-                button("🔎 शिकायत की स्थिति");
+    body.addView(
+            text(
+                    "आपकी समस्या, हमारी जिम्मेदारी",
+                    17));
 
-        Button mineButton =
-                button("📋 मेरी शिकायतें");
-        Button adminButton =
-        button("🛠️ Admin Panel");
+    body.addView(
+            text(
+                    "शिकायत दर्ज करें और अपनी शिकायत की स्थिति देखें।",
+                    15));
 
-        Button logoutButton =
-                button("🚪 लॉगआउट");
+    Button complaintButton =
+            button("📝 शिकायत दर्ज करें");
 
-        body.addView(complaintButton);
-        body.addView(trackButton);
-        body.addView(mineButton);
-        body.addView(adminButton);
-        body.addView(logoutButton);
+    Button trackButton =
+            button("🔎 शिकायत की स्थिति");
 
-        complaintButton.setOnClickListener(
-                v -> complaint());
+    Button mineButton =
+            button("📋 मेरी शिकायतें");
 
-        trackButton.setOnClickListener(
-                v -> track());
+    Button adminButton =
+            button("🛠️ Admin Panel");
 
-        mineButton.setOnClickListener(
-                v -> mine());
-        adminButton.setOnClickListener(
-        v -> adminPanel());
+    Button logoutButton =
+            button("🚪 लॉगआउट");
 
-        logoutButton.setOnClickListener(v -> {
+    body.addView(complaintButton);
+    body.addView(trackButton);
+    body.addView(mineButton);
+    body.addView(adminButton);
+    body.addView(logoutButton);
 
-            auth.signOut();
-            login();
-        });
-    }
+    complaintButton.setOnClickListener(
+            v -> complaint());
+
+    trackButton.setOnClickListener(
+            v -> track());
+
+    mineButton.setOnClickListener(
+            v -> mine());
+
+    adminButton.setOnClickListener(
+            v -> adminPanel());
+
+    logoutButton.setOnClickListener(v -> {
+
+        auth.signOut();
+        login();
+    });
+            }
 
     // =========================
     // COMPLAINT
