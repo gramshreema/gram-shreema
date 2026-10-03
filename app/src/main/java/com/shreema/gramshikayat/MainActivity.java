@@ -1290,7 +1290,7 @@ for (DocumentSnapshot d : complaints) {
                 });
     });
     }
-    // =========================
+   // =========================
 // SUPER ADMIN PANEL
 // =========================
 
@@ -1318,61 +1318,85 @@ void superAdminPanel() {
     if (user == null) {
 
         status.setText(
-                "पहले Login करें");
+                "❌ पहले Login करें");
         return;
     }
 
+    String uid =
+            user.getUid();
+
     db.collection("admins")
-            .document(user.getUid())
+            .document(uid)
             .get()
             .addOnSuccessListener(adminDoc -> {
 
-                if (!adminDoc.exists()) {
+                try {
+
+                    if (!adminDoc.exists()) {
+
+                        status.setText(
+                                "❌ Admin की अनुमति नहीं है");
+                        return;
+                    }
+
+                    String role =
+                            adminDoc.getString("role");
+
+                    Boolean active =
+                            adminDoc.getBoolean("active");
+
+                    if (role == null) {
+                        role = "";
+                    }
+
+                    if (!Boolean.TRUE.equals(active)) {
+
+                        status.setText(
+                                "❌ आपका Admin Account बंद है");
+                        return;
+                    }
+
+                    if (!"superadmin".equals(role)) {
+
+                        status.setText(
+                                "❌ केवल Super Admin इस पैनल को खोल सकता है");
+                        return;
+                    }
 
                     status.setText(
-                            "❌ Admin की अनुमति नहीं है");
-                    return;
-                }
+                            "✅ Super Admin की अनुमति है");
 
-                String role =
-                        adminDoc.getString("role");
+                    Button addAdminButton =
+                            button("➕ नया Admin जोड़ें");
 
-                Boolean active =
-                        adminDoc.getBoolean("active");
+                    body.addView(addAdminButton);
 
-                if (!"superadmin".equals(role) ||
-                        !Boolean.TRUE.equals(active)) {
+                    addAdminButton.setOnClickListener(
+                            v -> addAdmin());
+
+                    Button manageAdminButton =
+                            button("👥 Admin की सूची / प्रबंधन");
+
+                    body.addView(manageAdminButton);
+
+                    manageAdminButton.setOnClickListener(
+                            v -> manageAdmins());
+
+                } catch (Exception e) {
 
                     status.setText(
-                            "❌ केवल Super Admin इस पैनल को खोल सकता है");
-                    return;
+                            "❌ Super Admin Panel में समस्या:\n\n" +
+                            e.getMessage());
                 }
 
-                status.setText(
-                        "✅ Super Admin की अनुमति है");
-
-                Button addAdminButton =
-                        button("➕ नया Admin जोड़ें");
-
-                body.addView(addAdminButton);
-
-                addAdminButton.setOnClickListener(
-                        v -> addAdmin());
-                Button manageAdminButton =
-        button("👥 Admin की सूची / प्रबंधन");
-
-body.addView(manageAdminButton);
-
-manageAdminButton.setOnClickListener(
-        v -> manageAdmins());
             })
             .addOnFailureListener(e -> {
 
                 status.setText(
-                        "Super Admin जाँच में समस्या:\n" +
+                        "❌ Firebase से Admin जानकारी नहीं मिली:\n\n" +
                         e.getMessage());
             });
-}
+                 }
     // =========================
 // ADD ADMIN
 // =========================
