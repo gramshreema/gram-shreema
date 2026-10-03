@@ -12,6 +12,8 @@ import android.net.Uri;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.*;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -513,6 +515,13 @@ photoButton.setOnClickListener(v -> {
     body.addView(status);
 
     submit.setOnClickListener(v -> {
+        if (selectedImageUri == null) {
+
+    status.setText(
+            "📷 कृपया शिकायत की फोटो चुनें");
+
+    return;
+        }
 
         String n =
                 name.getText()
@@ -582,46 +591,76 @@ photoButton.setOnClickListener(v -> {
                 "createdAt",
                 FieldValue.serverTimestamp());
 
-        db.collection("complaints")
-                .add(data)
-                .addOnSuccessListener(document -> {
+        FirebaseStorage storage =
+        FirebaseStorage.getInstance();
 
-                    lastComplaintId =
-                            document.getId();
+String fileName =
+        "complaint_photos/" +
+        user.getUid() +
+        "/" +
+        System.currentTimeMillis() +
+        ".jpg";
 
-                    status.setText(
-                            "✅ शिकायत दर्ज हो गई।\n\n" +
-                            "Complaint ID:\n" +
-                            lastComplaintId);
+StorageReference photoRef =
+        storage.getReference()
+                .child(fileName);
 
-                    Button viewStatus =
-                            button(
-                                    "🔎 इसी शिकायत की स्थिति देखें");
+photoRef.putFile(selectedImageUri)
+        .addOnSuccessListener(taskSnapshot -> {
 
-                    Button goHome =
-                            button(
-                                    "🏠 होम पर जाएँ");
+            photoRef.getDownloadUrl()
+                    .addOnSuccessListener(uri -> {
 
-                    body.addView(viewStatus);
-                    body.addView(goHome);
+                        data.put(
+                                "photoUrl",
+                                uri.toString());
 
-                    viewStatus.setOnClickListener(
-                            click ->
-                                    trackById(
-                                            lastComplaintId));
+                        db.collection("complaints")
+                                .add(data)
+                                .addOnSuccessListener(document -> {
 
-                    goHome.setOnClickListener(
-                            click ->
-                                    home());
-                })
-                .addOnFailureListener(e -> {
+                                    lastComplaintId =
+                                            document.getId();
 
-                    status.setText(
-                            "त्रुटि:\n" +
-                            e.getMessage());
-                });
-    });
-   }               
+                                    status.setText(
+                                            "✅ शिकायत दर्ज हो गई।\n\n" +
+                                            "Complaint ID:\n" +
+                                            lastComplaintId);
+
+                                    Button viewStatus =
+                                            button(
+                                                    "🔎 इसी शिकायत की स्थिति देखें");
+
+                                    Button goHome =
+                                            button(
+                                                    "🏠 होम पर जाएँ");
+
+                                    body.addView(viewStatus);
+                                    body.addView(goHome);
+
+                                    viewStatus.setOnClickListener(
+                                            click ->
+                                                    trackById(
+                                                            lastComplaintId));
+
+                                    goHome.setOnClickListener(
+                                            click ->
+                                                    home());
+                                })
+                                .addOnFailureListener(e -> {
+
+                                    status.setText(
+                                            "शिकायत सेव नहीं हुई:\n" +
+                                            e.getMessage());
+                                });
+                    });
+        })
+        .addOnFailureListener(e -> {
+
+            status.setText(
+                    "📷 फोटो अपलोड नहीं हुई:\n" +
+                    e.getMessage());
+        });
 
     // =========================
     // TRACK
