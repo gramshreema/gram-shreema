@@ -1339,11 +1339,16 @@ void superAdminPanel() {
                         return;
                     }
 
-                    String role =
-                            adminDoc.getString("role");
+                    Object roleValue =
+        adminDoc.get("role");
 
-                    Boolean active =
-                            adminDoc.getBoolean("active");
+String role =
+        roleValue == null
+                ? ""
+                : String.valueOf(roleValue);
+
+Boolean active =
+        adminDoc.getBoolean("active");
 
                     if (role == null) {
                         role = "";
