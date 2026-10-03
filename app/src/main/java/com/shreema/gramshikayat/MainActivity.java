@@ -1286,6 +1286,37 @@ for (DocumentSnapshot d : complaints) {
 
                                 Button callButton =
                                         button("📞 कॉल करें");
+                                body.addView(
+        text(info, 16));
+
+String photoUrl =
+        d.getString("photoUrl");
+
+if (photoUrl != null &&
+        !photoUrl.trim().isEmpty()) {
+
+    Button photoButton =
+            button("📷 शिकायत की फोटो देखें");
+
+    body.addView(photoButton);
+
+    photoButton.setOnClickListener(
+            v -> {
+
+                android.content.Intent intent =
+                        new android.content.Intent(
+                                android.content.Intent.ACTION_VIEW);
+
+                intent.setData(
+                        android.net.Uri.parse(
+                                photoUrl));
+
+                startActivity(intent);
+            });
+}
+
+Button callButton =
+        button("📞 कॉल करें");
 
                                 body.addView(callButton);
 
