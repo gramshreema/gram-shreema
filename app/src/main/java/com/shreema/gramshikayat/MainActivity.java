@@ -1315,9 +1315,6 @@ if (photoUrl != null &&
             });
 }
 
-Button callButton =
-        button("📞 कॉल करें");
-
                                 body.addView(callButton);
 
                                 String phoneNumber =
