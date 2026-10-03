@@ -384,17 +384,23 @@ public class MainActivity extends Activity {
             button("📋 मेरी शिकायतें");
 
     Button adminButton =
-            button("🛠️ Admin Panel");
+        button("🛠️ Admin Panel");
 
-    Button logoutButton =
-            button("🚪 लॉगआउट");
+Button superAdminButton =
+        button("👑 Super Admin Panel");
+
+Button logoutButton =
+        button("🚪 लॉगआउट");
 
     body.addView(complaintButton);
     body.addView(trackButton);
     body.addView(mineButton);
     body.addView(adminButton);
-    body.addView(logoutButton);
+body.addView(superAdminButton);
+body.addView(logoutButton);
 
+        superAdminButton.setOnClickListener(
+        v -> superAdminPanel());
     complaintButton.setOnClickListener(
             v -> complaint());
 
@@ -1284,6 +1290,304 @@ for (DocumentSnapshot d : complaints) {
                 });
     });
     }
+    // =========================
+// SUPER ADMIN PANEL
+// =========================
+
+void superAdminPanel() {
+
+    screen("👑 Super Admin Panel");
+
+    status = text(
+            "Super Admin की अनुमति जाँची जा रही है...",
+            16);
+
+    body.addView(status);
+
+    Button homeButton =
+            button("🏠 होम पर जाएँ");
+
+    body.addView(homeButton);
+
+    homeButton.setOnClickListener(
+            v -> home());
+
+    FirebaseUser user =
+            auth.getCurrentUser();
+
+    if (user == null) {
+
+        status.setText(
+                "पहले Login करें");
+        return;
+    }
+
+    db.collection("admins")
+            .document(user.getUid())
+            .get()
+            .addOnSuccessListener(adminDoc -> {
+
+                if (!adminDoc.exists()) {
+
+                    status.setText(
+                            "❌ Admin की अनुमति नहीं है");
+                    return;
+                }
+
+                String role =
+                        adminDoc.getString("role");
+
+                Boolean active =
+                        adminDoc.getBoolean("active");
+
+                if (!"superadmin".equals(role) ||
+                        !Boolean.TRUE.equals(active)) {
+
+                    status.setText(
+                            "❌ केवल Super Admin इस पैनल को खोल सकता है");
+                    return;
+                }
+
+                status.setText(
+                        "✅ Super Admin की अनुमति है");
+
+                Button addAdminButton =
+                        button("➕ नया Admin जोड़ें");
+
+                body.addView(addAdminButton);
+
+                addAdminButton.setOnClickListener(
+                        v -> addAdmin());
+                Button manageAdminButton =
+        button("👥 Admin की सूची / प्रबंधन");
+
+body.addView(manageAdminButton);
+
+manageAdminButton.setOnClickListener(
+        v -> manageAdmins());
+            })
+            .addOnFailureListener(e -> {
+
+                status.setText(
+                        "Super Admin जाँच में समस्या:\n" +
+                        e.getMessage());
+            });
+}
+    // =========================
+// ADD ADMIN
+// =========================
+
+void addAdmin() {
+
+    screen("➕ नया Admin जोड़ें");
+
+    EditText uidInput =
+            new EditText(this);
+
+    uidInput.setHint(
+            "नए अधिकारी का Firebase UID");
+
+    uidInput.setInputType(
+            InputType.TYPE_CLASS_TEXT);
+
+    body.addView(uidInput);
+
+    EditText nameInput =
+            new EditText(this);
+
+    nameInput.setHint(
+            "अधिकारी का नाम");
+
+    body.addView(nameInput);
+
+    Button saveButton =
+            button("💾 Admin सेव करें");
+
+    body.addView(saveButton);
+
+    Button backButton =
+            button("⬅️ Super Admin Panel");
+
+    body.addView(backButton);
+
+    status = text("", 16);
+
+    body.addView(status);
+
+    backButton.setOnClickListener(
+            v -> superAdminPanel());
+
+    saveButton.setOnClickListener(v -> {
+
+        String uid =
+                uidInput.getText()
+                        .toString()
+                        .trim();
+
+        String name =
+                nameInput.getText()
+                        .toString()
+                        .trim();
+
+        if (uid.isEmpty()) {
+
+            status.setText(
+                    "Firebase UID डालें");
+            return;
+        }
+
+        if (name.isEmpty()) {
+
+            status.setText(
+                    "अधिकारी का नाम डालें");
+            return;
+        }
+
+        Map<String, Object> adminData =
+                new HashMap<>();
+
+        adminData.put(
+                "name",
+                name);
+
+        adminData.put(
+                "role",
+                "admin");
+
+        adminData.put(
+                "active",
+                true);
+
+        db.collection("admins")
+                .document(uid)
+                .set(adminData)
+                .addOnSuccessListener(aVoid -> {
+
+                    status.setText(
+                            "✅ Admin सफलतापूर्वक जोड़ दिया गया\n\n" +
+                            "नाम: " +
+                            name +
+                            "\n\nUID:\n" +
+                            uid);
+                })
+                .addOnFailureListener(e -> {
+
+                    status.setText(
+                            "❌ Admin नहीं जोड़ा गया:\n" +
+                            e.getMessage());
+                });
+    });
+}
+    // =========================
+// MANAGE ADMINS
+// =========================
+
+void manageAdmins() {
+
+    screen("👥 Admin की सूची / प्रबंधन");
+
+    status = text(
+            "Admin की सूची लोड हो रही है...",
+            16);
+
+    body.addView(status);
+
+    Button backButton =
+            button("⬅️ Super Admin Panel");
+
+    body.addView(backButton);
+
+    backButton.setOnClickListener(
+            v -> superAdminPanel());
+
+    db.collection("admins")
+            .get()
+            .addOnSuccessListener(snapshot -> {
+
+                status.setText(
+                        "कुल Admin: " +
+                        snapshot.size());
+
+                for (DocumentSnapshot doc :
+                        snapshot.getDocuments()) {
+
+                    String uid =
+                            doc.getId();
+
+                    String name =
+                            doc.getString("name");
+
+                    String role =
+                            doc.getString("role");
+
+                    Boolean active =
+                            doc.getBoolean("active");
+
+                    if (name == null)
+                        name = "नाम नहीं है";
+
+                    if (role == null)
+                        role = "admin";
+
+                    if (active == null)
+                        active = false;
+
+                    TextView adminInfo =
+                            text(
+                                    "👤 " + name +
+                                    "\n🔑 Role: " + role +
+                                    "\n🆔 UID: " + uid +
+                                    "\n📌 स्थिति: " +
+                                    (active
+                                            ? "सक्रिय"
+                                            : "बंद"),
+                                    15);
+
+                    body.addView(adminInfo);
+
+                    Button toggleButton =
+                            button(
+                                    active
+                                            ? "🚫 Admin बंद करें"
+                                            : "✅ Admin चालू करें");
+
+                    body.addView(toggleButton);
+
+                    Boolean currentActive =
+                            active;
+
+                    toggleButton.setOnClickListener(
+                            v -> {
+
+                                db.collection("admins")
+                                        .document(uid)
+                                        .update(
+                                                "active",
+                                                !currentActive)
+                                        .addOnSuccessListener(
+                                                aVoid -> {
+
+                                                    manageAdmins();
+                                                })
+                                        .addOnFailureListener(
+                                                e -> {
+
+                                                    Toast.makeText(
+                                                            this,
+                                                            "❌ बदलाव नहीं हुआ",
+                                                            Toast.LENGTH_SHORT)
+                                                            .show();
+                                                });
+                            });
+                }
+            })
+            .addOnFailureListener(e -> {
+
+                status.setText(
+                        "❌ Admin सूची लोड नहीं हुई:\n" +
+                        e.getMessage());
+            });
+        }
     // =========================
     // PHONE BACK BUTTON
     // =========================
