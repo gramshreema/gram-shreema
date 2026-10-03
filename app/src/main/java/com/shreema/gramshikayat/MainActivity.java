@@ -15,6 +15,11 @@ import com.google.firebase.firestore.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONObject;
 
 public class MainActivity extends Activity {
 
@@ -589,77 +594,192 @@ photoButton.setOnClickListener(v -> {
                 "createdAt",
                 FieldValue.serverTimestamp());
 
-        FirebaseStorage storage =
-        FirebaseStorage.getInstance();
+    new Thread(() -> {
 
-String fileName =
-        "complaint_photos/" +
-        user.getUid() +
-        "/" +
-        System.currentTimeMillis() +
-        ".jpg";
+    try {
 
-StorageReference photoRef =
-        storage.getReference()
-                .child(fileName);
+        String cloudName = "yfva6qyg";
+        String uploadPreset = "shreema_complaint";
 
-photoRef.putFile(selectedImageUri)
-        .addOnSuccessListener(taskSnapshot -> {
+        String boundary =
+                "----ShreemaBoundary" +
+                System.currentTimeMillis();
 
-            photoRef.getDownloadUrl()
-                    .addOnSuccessListener(uri -> {
+        URL url = new URL(
+                "https://api.cloudinary.com/v1_1/" +
+                cloudName +
+                "/image/upload");
 
-                        data.put(
-                                "photoUrl",
-                                uri.toString());
+        HttpURLConnection connection =
+                (HttpURLConnection) url.openConnection();
 
-                        db.collection("complaints")
-                                .add(data)
-                                .addOnSuccessListener(document -> {
+        connection.setRequestMethod("POST");
+        connection.setDoOutput(true);
+        connection.setRequestProperty(
+                "Content-Type",
+                "multipart/form-data; boundary=" +
+                boundary);
 
-                                    lastComplaintId =
-                                            document.getId();
+        OutputStream output =
+                connection.getOutputStream();
 
-                                    status.setText(
-                                            "✅ शिकायत दर्ज हो गई।\n\n" +
-                                            "Complaint ID:\n" +
-                                            lastComplaintId);
+        String lineEnd = "\r\n";
 
-                                    Button viewStatus =
-                                            button(
-                                                    "🔎 इसी शिकायत की स्थिति देखें");
+        output.write((
+                "--" + boundary + lineEnd +
+                "Content-Disposition: form-data; name=\"upload_preset\"" +
+                lineEnd + lineEnd +
+                uploadPreset + lineEnd
+        ).getBytes("UTF-8"));
 
-                                    Button goHome =
-                                            button(
-                                                    "🏠 होम पर जाएँ");
+        output.write((
+                "--" + boundary + lineEnd +
+                "Content-Disposition: form-data; name=\"file\"; filename=\"complaint.jpg\"" +
+                lineEnd +
+                "Content-Type: image/jpeg" +
+                lineEnd + lineEnd
+        ).getBytes("UTF-8"));
 
-                                    body.addView(viewStatus);
-                                    body.addView(goHome);
+        InputStream input =
+                getContentResolver()
+                        .openInputStream(
+                                selectedImageUri);
 
-                                    viewStatus.setOnClickListener(
-                                            click ->
-                                                    trackById(
-                                                            lastComplaintId));
+        byte[] buffer =
+                new byte[4096];
 
-                                    goHome.setOnClickListener(
-                                            click ->
-                                                    home());
-                                })
-                                .addOnFailureListener(e -> {
+        int length;
 
-                                    status.setText(
-                                            "शिकायत सेव नहीं हुई:\n" +
-                                            e.getMessage());
-                                });
-                    });
-        })
-        .addOnFailureListener(e -> {
+        while ((length =
+                input.read(buffer)) != -1) {
+
+            output.write(
+                    buffer,
+                    0,
+                    length);
+        }
+
+        input.close();
+
+        output.write(
+                (lineEnd +
+                 "--" +
+                 boundary +
+                 "--" +
+                 lineEnd)
+                        .getBytes("UTF-8"));
+
+        output.flush();
+        output.close();
+
+        int responseCode =
+                connection.getResponseCode();
+
+        InputStream responseStream;
+
+        if (responseCode >= 200 &&
+                responseCode < 300) {
+
+            responseStream =
+                    connection.getInputStream();
+
+        } else {
+
+            responseStream =
+                    connection.getErrorStream();
+        }
+
+        java.util.Scanner scanner =
+                new java.util.Scanner(
+                        responseStream)
+                        .useDelimiter("\\A");
+
+        String response =
+                scanner.hasNext()
+                        ? scanner.next()
+                        : "";
+
+        scanner.close();
+
+        if (responseCode >= 200 &&
+                responseCode < 300) {
+
+            JSONObject json =
+                    new JSONObject(response);
+
+            String photoUrl =
+                    json.getString("secure_url");
+
+            data.put(
+                    "photoUrl",
+                    photoUrl);
+
+            runOnUiThread(() -> {
+
+                db.collection("complaints")
+                        .add(data)
+                        .addOnSuccessListener(document -> {
+
+                            lastComplaintId =
+                                    document.getId();
+
+                            status.setText(
+                                    "✅ शिकायत दर्ज हो गई।\n\n" +
+                                    "Complaint ID:\n" +
+                                    lastComplaintId);
+
+                            Button viewStatus =
+                                    button(
+                                            "🔎 इसी शिकायत की स्थिति देखें");
+
+                            Button goHome =
+                                    button(
+                                            "🏠 होम पर जाएँ");
+
+                            body.addView(viewStatus);
+                            body.addView(goHome);
+
+                            viewStatus.setOnClickListener(
+                                    click ->
+                                            trackById(
+                                                    lastComplaintId));
+
+                            goHome.setOnClickListener(
+                                    click ->
+                                            home());
+                        })
+                        .addOnFailureListener(e -> {
+
+                            status.setText(
+                                    "शिकायत सेव नहीं हुई:\n" +
+                                    e.getMessage());
+                        });
+            });
+
+        } else {
+
+            runOnUiThread(() -> {
+
+                status.setText(
+                        "📷 फोटो अपलोड नहीं हुई:\n" +
+                        response);
+            });
+        }
+
+        connection.disconnect();
+
+    } catch (Exception e) {
+
+        runOnUiThread(() -> {
 
             status.setText(
-                    "📷 फोटो अपलोड नहीं हुई:\n" +
+                    "📷 फोटो अपलोड में समस्या:\n" +
                     e.getMessage());
         });
+    }
 
+}).start();
+                                    
     // =========================
     // TRACK
     // =========================
