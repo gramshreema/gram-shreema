@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.graphics.Color;
 import android.text.InputType;
 import android.widget.*;
+import android.content.Intent;
+import android.provider.MediaStore;
+import android.net.Uri;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,6 +33,7 @@ public class MainActivity extends Activity {
     TextView status;
 
     String lastComplaintId = "";
+    Uri selectedImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -483,6 +487,22 @@ body.addView(logoutButton);
     location.setHint(
             "समस्या का स्थान / वार्ड");
     body.addView(location);
+       Button photoButton =
+        button("📷 शिकायत की फोटो चुनें");
+
+body.addView(photoButton);
+
+photoButton.setOnClickListener(v -> {
+
+    Intent intent =
+            new Intent(
+                    Intent.ACTION_PICK,
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+    startActivityForResult(
+            intent,
+            1001);
+});
 
     Button submit =
             button("✈️ शिकायत सबमिट करें");
@@ -1617,6 +1637,31 @@ void manageAdmins() {
                         e.getMessage());
             });
         }
+    @Override
+protected void onActivityResult(
+        int requestCode,
+        int resultCode,
+        Intent data) {
+
+    super.onActivityResult(
+            requestCode,
+            resultCode,
+            data);
+
+    if (requestCode == 1001 &&
+            resultCode == RESULT_OK &&
+            data != null) {
+
+        selectedImageUri =
+                data.getData();
+
+        Toast.makeText(
+                this,
+                "✅ फोटो चुन ली गई",
+                Toast.LENGTH_SHORT)
+                .show();
+    }
+}
     // =========================
     // PHONE BACK BUTTON
     // =========================
