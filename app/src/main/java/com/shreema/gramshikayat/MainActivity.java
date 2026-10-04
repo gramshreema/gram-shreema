@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
 
     String lastComplaintId = "";
     Uri selectedImageUri;
+    Uri solutionImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1460,6 +1461,22 @@ if (photoUrl != null &&
     actionDetails.setMinLines(4);
 
     body.addView(actionDetails);
+      Button solutionPhotoButton =
+        button("📷 समाधान की फोटो चुनें");
+
+body.addView(solutionPhotoButton);
+
+solutionPhotoButton.setOnClickListener(v -> {
+
+    Intent intent =
+            new Intent(
+                    Intent.ACTION_PICK,
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+    startActivityForResult(
+            intent,
+            2001);
+});
 
     Button save =
             button("💾 स्थिति सेव करें");
@@ -1476,25 +1493,38 @@ if (photoUrl != null &&
 
     save.setOnClickListener(v -> {
 
-        String newStatus =
-                statusSpinner
-                        .getSelectedItem()
-                        .toString();
+    String newStatus =
+            statusSpinner
+                    .getSelectedItem()
+                    .toString();
 
-        String details =
-                actionDetails.getText()
-                        .toString()
-                        .trim();
+    String details =
+            actionDetails.getText()
+                    .toString()
+                    .trim();
 
-        if (newStatus.equals("निस्तारित")
-                && details.isEmpty()) {
+    if (newStatus.equals("निस्तारित")
+            && details.isEmpty()) {
 
-            status.setText(
-                    "निस्तारित करने से पहले\n" +
-                    "कार्यवाही / समाधान विवरण लिखें");
+        status.setText(
+                "निस्तारित करने से पहले\n" +
+                "कार्यवाही / समाधान विवरण लिखें");
 
-            return;
-        }
+        return;
+    }
+
+    if (newStatus.equals("निस्तारित")
+            && solutionImageUri == null) {
+
+        status.setText(
+                "📷 निस्तारित करने से पहले\n" +
+                "समाधान की फोटो चुनें");
+
+        return;
+    }
+
+    // सामान्य स्थिति: प्राप्त / कार्यवाही जारी
+    if (!newStatus.equals("निस्तारित")) {
 
         db.collection("complaints")
                 .document(complaintId)
@@ -1519,9 +1549,193 @@ if (photoUrl != null &&
                             "स्थिति अपडेट नहीं हुई:\n" +
                             e.getMessage());
                 });
-    });
+
+        return;
     }
-   // =========================
+
+    // =========================
+    // समाधान की फोटो Cloudinary पर अपलोड
+    // =========================
+
+    status.setText(
+            "📷 समाधान की फोटो अपलोड हो रही है...");
+
+    new Thread(() -> {
+
+        try {
+
+            String cloudName = "yfva6qyg";
+            String uploadPreset =
+                    "shreema_complaint";
+
+            String boundary =
+                    "----ShreemaSolution" +
+                    System.currentTimeMillis();
+
+            URL url =
+                    new URL(
+                            "https://api.cloudinary.com/v1_1/" +
+                            cloudName +
+                            "/image/upload");
+
+            HttpURLConnection connection =
+                    (HttpURLConnection)
+                            url.openConnection();
+
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+
+            connection.setRequestProperty(
+                    "Content-Type",
+                    "multipart/form-data; boundary=" +
+                            boundary);
+
+            OutputStream output =
+                    connection.getOutputStream();
+
+            String lineEnd = "\r\n";
+
+            output.write((
+                    "--" + boundary + lineEnd +
+                    "Content-Disposition: form-data; name=\"upload_preset\"" +
+                    lineEnd + lineEnd +
+                    uploadPreset + lineEnd
+            ).getBytes("UTF-8"));
+
+            output.write((
+                    "--" + boundary + lineEnd +
+                    "Content-Disposition: form-data; name=\"file\"; filename=\"solution.jpg\"" +
+                    lineEnd +
+                    "Content-Type: image/jpeg" +
+                    lineEnd + lineEnd
+            ).getBytes("UTF-8"));
+
+            InputStream input =
+                    getContentResolver()
+                            .openInputStream(
+                                    solutionImageUri);
+
+            byte[] buffer =
+                    new byte[4096];
+
+            int length;
+
+            while ((length =
+                    input.read(buffer)) != -1) {
+
+                output.write(
+                        buffer,
+                        0,
+                        length);
+            }
+
+            input.close();
+
+            output.write(
+                    (lineEnd +
+                            "--" +
+                            boundary +
+                            "--" +
+                            lineEnd)
+                            .getBytes("UTF-8"));
+
+            output.flush();
+            output.close();
+
+            int responseCode =
+                    connection.getResponseCode();
+
+            InputStream responseStream;
+
+            if (responseCode >= 200 &&
+                    responseCode < 300) {
+
+                responseStream =
+                        connection.getInputStream();
+
+            } else {
+
+                responseStream =
+                        connection.getErrorStream();
+            }
+
+            java.util.Scanner scanner =
+                    new java.util.Scanner(
+                            responseStream)
+                            .useDelimiter("\\A");
+
+            String response =
+                    scanner.hasNext()
+                            ? scanner.next()
+                            : "";
+
+            scanner.close();
+
+            if (responseCode >= 200 &&
+                    responseCode < 300) {
+
+                JSONObject json =
+                        new JSONObject(response);
+
+                String solutionPhotoUrl =
+                        json.getString(
+                                "secure_url");
+
+                runOnUiThread(() -> {
+                  db.collection("complaints")
+                            .document(complaintId)
+                            .update(
+                                    "status",
+                                    newStatus,
+                                    "actionDetails",
+                                    details,
+                                    "solutionPhotoUrl",
+                                    solutionPhotoUrl)
+                            .addOnSuccessListener(
+                                    aVoid -> {
+
+                                status.setText(
+                                        "✅ शिकायत निस्तारित हो गई\n\n" +
+                                        "नई स्थिति: निस्तारित\n\n" +
+                                        "कार्यवाही / समाधान:\n" +
+                                        details);
+                            })
+                            .addOnFailureListener(
+                                    e -> {
+
+                                status.setText(
+                                        "स्थिति अपडेट नहीं हुई:\n" +
+                                        e.getMessage());
+                            });
+                });
+
+            } else {
+
+                runOnUiThread(() -> {
+
+                    status.setText(
+                            "📷 समाधान की फोटो अपलोड नहीं हुई:\n" +
+                            response);
+                });
+            }
+
+            connection.disconnect();
+
+        } catch (Exception e) {
+
+            runOnUiThread(() -> {
+
+                status.setText(
+                        "📷 समाधान की फोटो अपलोड में समस्या:\n" +
+                        e.getMessage());
+            });
+        }
+            }).start();
+});
+
+}   // changeStatus() बंद
+
+// =========================
 // SUPER ADMIN PANEL
 // =========================
 
@@ -1860,22 +2074,35 @@ protected void onActivityResult(
             data);
 
     if (requestCode == 1001 &&
-            resultCode == RESULT_OK &&
-            data != null) {
+        resultCode == RESULT_OK &&
+        data != null) {
 
-        selectedImageUri =
-                data.getData();
+    selectedImageUri =
+            data.getData();
 
-        Toast.makeText(
-                this,
-                "✅ फोटो चुन ली गई",
-                Toast.LENGTH_SHORT)
-                .show();
-    }
+    Toast.makeText(
+            this,
+            "✅ फोटो चुन ली गई",
+            Toast.LENGTH_SHORT)
+            .show();
 }
+
+if (requestCode == 2001 &&
+        resultCode == RESULT_OK &&
+        data != null) {
+
+    solutionImageUri =
+            data.getData();
+
+    Toast.makeText(
+            this,
+            "✅ समाधान की फोटो चुन ली गई",
+            Toast.LENGTH_SHORT)
+            .show();
+}
+ }
     // =========================
     // PHONE BACK BUTTON
-    // =========================
 
     @Override
     public void onBackPressed() {
