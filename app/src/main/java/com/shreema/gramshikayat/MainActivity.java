@@ -963,6 +963,34 @@ void trackById(String complaintId) {
 
             "\n\nकार्यवाही / समाधान:\n" +
             actionDetails);
+        // =========================
+// समाधान की फोटो
+// =========================
+
+String solutionPhotoUrl =
+        document.getString("solutionPhotoUrl");
+
+if (solutionPhotoUrl != null &&
+        !solutionPhotoUrl.trim().isEmpty()) {
+
+    ImageView solutionPhoto =
+            new ImageView(this);
+
+    solutionPhoto.setLayoutParams(
+            new android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                    500));
+
+    solutionPhoto.setScaleType(
+            ImageView.ScaleType.CENTER_CROP);
+
+    body.addView(solutionPhoto);
+
+    com.bumptech.glide.Glide
+            .with(this)
+            .load(solutionPhotoUrl)
+            .into(solutionPhoto);
+}
     }
 
     // =========================
