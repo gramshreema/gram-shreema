@@ -8,6 +8,7 @@ import android.widget.*;
 import android.content.Intent;
 import android.provider.MediaStore;
 import android.net.Uri;
+import android.widget.ImageView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -1291,6 +1292,27 @@ for (DocumentSnapshot d : complaints) {
 
 String photoUrl =
         d.getString("photoUrl");
+                                if (photoUrl != null &&
+        !photoUrl.trim().isEmpty()) {
+
+    ImageView photoPreview =
+            new ImageView(this);
+
+    photoPreview.setLayoutParams(
+            new android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                    500));
+
+    photoPreview.setScaleType(
+            ImageView.ScaleType.CENTER_CROP);
+
+    body.addView(photoPreview);
+
+    com.bumptech.glide.Glide
+            .with(this)
+            .load(photoUrl)
+            .into(photoPreview);
+                                }
 
 if (photoUrl != null &&
         !photoUrl.trim().isEmpty()) {
