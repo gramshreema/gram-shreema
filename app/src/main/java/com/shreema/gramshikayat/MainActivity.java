@@ -445,11 +445,28 @@ body.addView(logoutButton);
 
         ImageView profile = new ImageView(this);
 
-        profile.setImageResource(
-                android.R.drawable.ic_menu_myplaces);
+profile.setImageResource(
+        R.drawable.profile_photo);
 
-        profile.setScaleType(
-                ImageView.ScaleType.CENTER_INSIDE);
+profile.setScaleType(
+        ImageView.ScaleType.CENTER_CROP);
+
+profile.setClipToOutline(true);
+
+profile.setOutlineProvider(
+        new android.view.ViewOutlineProvider() {
+            @Override
+            public void getOutline(
+                    android.view.View view,
+                    android.graphics.Outline outline) {
+
+                outline.setOval(
+                        0,
+                        0,
+                        view.getWidth(),
+                        view.getHeight());
+            }
+        });
 
         LinearLayout.LayoutParams imageParams =
                 new LinearLayout.LayoutParams(
