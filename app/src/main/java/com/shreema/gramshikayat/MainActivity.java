@@ -399,6 +399,8 @@ public class MainActivity extends Activity {
 
 Button superAdminButton =
         button("👑 Super Admin Panel");
+        Button aboutButton =
+        button("ℹ️ About");
 
 Button logoutButton =
         button("🚪 लॉगआउट");
@@ -408,10 +410,13 @@ Button logoutButton =
     body.addView(mineButton);
     body.addView(adminButton);
 body.addView(superAdminButton);
+        body.addView(aboutButton);
 body.addView(logoutButton);
 
         superAdminButton.setOnClickListener(
         v -> superAdminPanel());
+        aboutButton.setOnClickListener(
+        v -> about());
     complaintButton.setOnClickListener(
             v -> complaint());
 
@@ -430,6 +435,79 @@ body.addView(logoutButton);
         login();
     });
             }
+        // =========================
+    // ABOUT
+    // =========================
+
+    void about() {
+
+        screen("About");
+
+        ImageView profile = new ImageView(this);
+
+        profile.setImageResource(
+                android.R.drawable.ic_menu_myplaces);
+
+        profile.setScaleType(
+                ImageView.ScaleType.CENTER_INSIDE);
+
+        LinearLayout.LayoutParams imageParams =
+                new LinearLayout.LayoutParams(
+                        220, 220);
+
+        imageParams.gravity =
+                android.view.Gravity.CENTER;
+
+        body.addView(profile, imageParams);
+
+        TextView appName =
+                text(
+                        "🌿 ग्राम श्रीमा शिकायत ऐप",
+                        24);
+
+        appName.setGravity(
+                android.view.Gravity.CENTER);
+
+        appName.setTextColor(
+                Color.rgb(8, 127, 67));
+
+        body.addView(appName);
+
+        TextView village =
+                text(
+                        "ग्राम श्रीमा",
+                        20);
+
+        village.setGravity(
+                android.view.Gravity.CENTER);
+
+        body.addView(village);
+
+        body.addView(
+                text(
+                        "जन शिकायत एवं समाधान",
+                        19));
+
+        body.addView(
+                text(
+                        "इस ऐप के माध्यम से ग्रामवासियों की " +
+                        "समस्याओं और शिकायतों को दर्ज कर " +
+                        "उनकी स्थिति देखने की सुविधा प्रदान की जाती है।",
+                        16));
+
+        body.addView(
+                text(
+                        "आपकी समस्या, हमारी जिम्मेदारी",
+                        18));
+
+        Button backButton =
+                button("⬅️ वापस");
+
+        body.addView(backButton);
+
+        backButton.setOnClickListener(
+                v -> home());
+    }
 
     // =========================
     // COMPLAINT
